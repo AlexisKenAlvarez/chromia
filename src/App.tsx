@@ -1,8 +1,24 @@
 import { BsFastForwardFill } from "react-icons/bs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
+import 'regenerator-runtime/runtime'
 
 const App = () => {
   const [seekTime, handleSeekTime] = useState<number>(5);
+
+  const {
+    transcript,
+    browserSupportsSpeechRecognition,
+    isMicrophoneAvailable
+  } = useSpeechRecognition();
+
+  console.log(transcript);
+
+  useEffect(() => {
+    SpeechRecognition.startListening({ continuous: false });
+  }, []);
 
   const handlePlayback = async (type: string) => {
     let [tab] = await chrome.tabs.query({ active: true });
@@ -43,6 +59,22 @@ const App = () => {
       args: [seekTime, type],
     });
   };
+
+  if (!browserSupportsSpeechRecognition) {
+    return (
+      <div className="w-[20rem] h-[25rem] bg-black p-10 grid place-content-center text-center">
+        <span>Browser doesn't support speech recognition.</span>;
+      </div>
+    );
+  }
+
+  if (!isMicrophoneAvailable) {
+    return (
+      <div className="w-[20rem] h-[25rem] bg-black p-10 grid place-content-center text-center">
+        <span>Please allow us to use your microphone to access our full feature.</span>;
+      </div>
+    );
+  }
 
   return (
     <div className="w-[20rem] h-[25rem] bg-black p-10">
