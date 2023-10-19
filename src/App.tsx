@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { BsFastForwardFill } from "react-icons/bs";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -20,6 +19,30 @@ const App = () => {
       command: ["play", "tuloy", "post"],
       callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
         handlePlayback("play"), resetTranscript();
+      },
+    },
+    {
+      command: ["skip"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        handleSeek("forward"), resetTranscript();
+      },
+    },
+    {
+      command: ["rewind"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        handleSeek("backward"), resetTranscript();
+      },
+    },
+    {
+      command: ["scroll down"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        handleScroll("down"), resetTranscript();
+      },
+    },
+    {
+      command: ["scroll up"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        handleScroll("up"), resetTranscript();
       },
     },
   ];
@@ -76,6 +99,22 @@ const App = () => {
     });
   };
 
+  const handleScroll = async (type: string) => {
+    let [tab] = await chrome.tabs.query({ active: true });
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id! },
+      world: "MAIN",
+      func: (type: string) => {
+        if (type === "down") {
+          window.scrollBy(0, window.innerHeight);
+        } else {
+          window.scrollBy(0, -window.innerHeight);
+        }
+      },
+      args: [type],
+    });
+  };
+
   if (!browserSupportsSpeechRecognition) {
     return (
       <div className="w-[20rem] h-[25rem] bg-black p-10 grid place-content-center text-center text-white">
@@ -97,9 +136,11 @@ const App = () => {
 
   return (
     <div className="w-[20rem] h-[25rem] bg-black p-10">
+      <h1 className="text-white text-2xl text-center">
+        {listening ? "Now listening" : "Not listening"}
+      </h1>
 
-        <h1 className="text-white text-2xl text-center">{listening ? "Now listening" :  "Not listening"}</h1>
-  
+      <h1 className="text-white">{transcript}</h1>
 
       <div className=" w-fit mx-auto mt-10 flex flex-col gap-5">
         <button
@@ -108,7 +149,6 @@ const App = () => {
             await navigator.mediaDevices
               .getUserMedia({ audio: true, video: false })
               .then(function () {
-                console.log("Done");
                 setListening(true);
                 SpeechRecognition.startListening({ continuous: true });
               })
@@ -131,40 +171,16 @@ const App = () => {
         >
           Stop Mic
         </button>
-        {/* <button
-          className="bg-white px-5 py-2"
-          onClick={() => {
-            handlePlayback("play");
-          }}
-        >
-          Play
-        </button>
+
         <button
           className="bg-white px-5 py-2"
           onClick={() => {
-            handlePlayback("pause");
+            handleScroll("down");
           }}
         >
-          Pause
-        </button> */}
-        <div className="flex gap-2 justify-center w-full">
-          <button
-            className="px-5 py-2 bg-white w-full"
-            onClick={() => {
-              handleSeek("backward");
-            }}
-          >
-            <BsFastForwardFill className="scale-x-[-1]" />
-          </button>
-          <button
-            className="px-5 py-2 bg-white w-full"
-            onClick={() => {
-              handleSeek("forward");
-            }}
-          >
-            <BsFastForwardFill />
-          </button>
-        </div>
+          Scroll Down
+        </button>
+
         <div className="">
           <input
             type="range"
