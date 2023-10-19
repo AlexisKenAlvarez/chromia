@@ -1,23 +1,39 @@
-import { BsFastForwardFill } from "react-icons/bs";
 import { useEffect, useState } from "react";
+import { BsFastForwardFill } from "react-icons/bs";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import 'regenerator-runtime/runtime'
+import "regenerator-runtime/runtime";
 
 const App = () => {
   const [seekTime, handleSeekTime] = useState<number>(5);
+  const [listening, setListening] = useState(false);
+
+  const commands = [
+    {
+      command: ["pause", "tigil", "post", "stop"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        handlePlayback("pause"), resetTranscript();
+      },
+    },
+    {
+      command: ["play", "tuloy", "post"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        handlePlayback("play"), resetTranscript();
+      },
+    },
+  ];
 
   const {
     transcript,
     browserSupportsSpeechRecognition,
-    isMicrophoneAvailable
-  } = useSpeechRecognition();
+    isMicrophoneAvailable,
+  } = useSpeechRecognition({ commands });
 
   console.log(transcript);
 
   useEffect(() => {
-    SpeechRecognition.startListening({ continuous: false });
+    console.log("Hello user");
   }, []);
 
   const handlePlayback = async (type: string) => {
@@ -62,7 +78,7 @@ const App = () => {
 
   if (!browserSupportsSpeechRecognition) {
     return (
-      <div className="w-[20rem] h-[25rem] bg-black p-10 grid place-content-center text-center">
+      <div className="w-[20rem] h-[25rem] bg-black p-10 grid place-content-center text-center text-white">
         <span>Browser doesn't support speech recognition.</span>;
       </div>
     );
@@ -70,19 +86,52 @@ const App = () => {
 
   if (!isMicrophoneAvailable) {
     return (
-      <div className="w-[20rem] h-[25rem] bg-black p-10 grid place-content-center text-center">
-        <span>Please allow us to use your microphone to access our full feature.</span>;
+      <div className="w-[20rem] h-[25rem] bg-black p-10 grid place-content-center text-center text-white">
+        <span>
+          Please allow us to use your microphone to access our full feature.
+        </span>
+        ;
       </div>
     );
   }
 
   return (
     <div className="w-[20rem] h-[25rem] bg-black p-10">
-      <h1 className="text-white text-2xl text-center">
-        Enhanced Youtube Experience
-      </h1>
+
+        <h1 className="text-white text-2xl text-center">{listening ? "Now listening" :  "Not listening"}</h1>
+  
+
       <div className=" w-fit mx-auto mt-10 flex flex-col gap-5">
         <button
+          className="bg-white px-5 py-2"
+          onClick={async () => {
+            await navigator.mediaDevices
+              .getUserMedia({ audio: true, video: false })
+              .then(function () {
+                console.log("Done");
+                setListening(true);
+                SpeechRecognition.startListening({ continuous: true });
+              })
+              .catch(function (error) {
+                window.chrome.tabs.create({
+                  url: "request-mic.html",
+                });
+                console.log(error);
+              });
+          }}
+        >
+          Start Mic
+        </button>
+        <button
+          className="bg-white px-5 py-2"
+          onClick={() => {
+            setListening(false);
+            SpeechRecognition.abortListening();
+          }}
+        >
+          Stop Mic
+        </button>
+        {/* <button
           className="bg-white px-5 py-2"
           onClick={() => {
             handlePlayback("play");
@@ -97,7 +146,7 @@ const App = () => {
           }}
         >
           Pause
-        </button>
+        </button> */}
         <div className="flex gap-2 justify-center w-full">
           <button
             className="px-5 py-2 bg-white w-full"

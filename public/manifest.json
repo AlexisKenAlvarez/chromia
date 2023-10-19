@@ -5,6 +5,13 @@
   "action": {
     "default_popup": "index.html"
   },
-  "permissions": ["scripting", "activeTab", "tabs", "storage"],
+  "permissions": [
+    "scripting",
+    "activeTab",
+    "tabs",
+    "storage",
+    "nativeMessaging"
+  ],
+  "options_page": "options.html",
   "host_permissions": ["http://*/*", "https://*/*"]
 }
