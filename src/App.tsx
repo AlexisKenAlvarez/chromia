@@ -4,9 +4,31 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 import "regenerator-runtime/runtime";
 
+import axios from "axios";
+
 const App = () => {
   const [seekTime, handleSeekTime] = useState<number>(5);
   const [listening, setListening] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.post(
+          "https://thesis-server.vercel.app/api/v1/getPage",
+          {
+            presentationId: "1vda8wfRwSpOqSKgkzHc6qaPJTFVYBmVkSh1FefIerPs",
+          }
+        );
+
+        const data = res.data;
+        console.log(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchData(); // Call the async function here
+  }, []);
 
   const commands = [
     {
@@ -34,15 +56,9 @@ const App = () => {
       },
     },
     {
-      command: ["scroll down"],
+      command: ["go"],
       callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
-        handleScroll("down"), resetTranscript();
-      },
-    },
-    {
-      command: ["scroll up"],
-      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
-        handleScroll("up"), resetTranscript();
+        handleNext(), resetTranscript();
       },
     },
   ];
@@ -54,10 +70,6 @@ const App = () => {
   } = useSpeechRecognition({ commands });
 
   console.log(transcript);
-
-  useEffect(() => {
-    console.log("Hello user");
-  }, []);
 
   const handlePlayback = async (type: string) => {
     let [tab] = await chrome.tabs.query({ active: true });
@@ -99,20 +111,11 @@ const App = () => {
     });
   };
 
-  const handleScroll = async (type: string) => {
-    let [tab] = await chrome.tabs.query({ active: true });
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id! },
-      world: "MAIN",
-      func: (type: string) => {
-        if (type === "down") {
-          window.scrollBy(0, window.innerHeight);
-        } else {
-          window.scrollBy(0, -window.innerHeight);
-        }
-      },
-      args: [type],
-    });
+  const handleNext = () => {
+    console.log("GO NEXT");
+    const myurl =
+      "https://docs.google.com/presentation/d/1vda8wfRwSpOqSKgkzHc6qaPJTFVYBmVkSh1FefIerPs/edit#slide=id.g291e2a3783e_0_0";
+    chrome.tabs.update({ url: myurl });
   };
 
   if (!browserSupportsSpeechRecognition) {
@@ -170,15 +173,6 @@ const App = () => {
           }}
         >
           Stop Mic
-        </button>
-
-        <button
-          className="bg-white px-5 py-2"
-          onClick={() => {
-            handleScroll("down");
-          }}
-        >
-          Scroll Down
         </button>
 
         <div className="">
