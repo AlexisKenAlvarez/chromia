@@ -111,11 +111,74 @@ const App = () => {
     });
   };
 
-  const handleNext = () => {
-    console.log("GO NEXT");
-    const myurl =
-      "https://docs.google.com/presentation/d/1vda8wfRwSpOqSKgkzHc6qaPJTFVYBmVkSh1FefIerPs/edit#slide=id.g291e2a3783e_0_0";
-    chrome.tabs.update({ url: myurl });
+  const handleNext = async () => {
+    let [tab] = await chrome.tabs.query({ active: true });
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id! },
+      world: "MAIN",
+      func: () => {
+        var simulateMouseEvent = function (
+          element: any,
+          eventName: any,
+          coordX: any,
+          coordY: any
+        ) {
+          element.dispatchEvent(
+            new MouseEvent(eventName, {
+              view: window,
+              bubbles: true,
+              cancelable: true,
+              clientX: coordX,
+              clientY: coordY,
+              button: 0,
+            })
+          );
+        };
+
+        let elementToClick = document.querySelectorAll(
+          "div[role=button]"
+        )[1]
+
+        // Check if the element has an onclick attribute
+        var box = elementToClick.getBoundingClientRect(),
+          coordX = box.left + (box.right - box.left) / 2,
+          coordY = box.top + (box.bottom - box.top) / 2;
+
+        simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
+        simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
+        simulateMouseEvent(elementToClick, "click", coordX, coordY);
+      },
+    });
+
+    // var simulateMouseEvent = function (
+    //   element: any,
+    //   eventName: any,
+    //   coordX: any,
+    //   coordY: any
+    // ) {
+    //   element.dispatchEvent(
+    //     new MouseEvent(eventName, {
+    //       view: window,
+    //       bubbles: true,
+    //       cancelable: true,
+    //       clientX: coordX,
+    //       clientY: coordY,
+    //       button: 0,
+    //     })
+    //   );
+    // };
+
+    // let elementToClick = document.querySelectorAll("div[role=button]")[1];
+
+    // setTimeout(() => {
+    //   var box = elementToClick.getBoundingClientRect(),
+    //     coordX = box.left + (box.right - box.left) / 2,
+    //     coordY = box.top + (box.bottom - box.top) / 2;
+
+    //   simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
+    //   simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
+    //   simulateMouseEvent(elementToClick, "click", coordX, coordY);
+    // }, 500);
   };
 
   if (!browserSupportsSpeechRecognition) {
@@ -175,8 +238,23 @@ const App = () => {
           Stop Mic
         </button>
 
+        <button className="bg-white px-5 py-2" onClick={handleNext}>
+          Go next
+        </button>
+
+        <div
+          className="bg-white px-5 py-2 test"
+          role="button"
+          onClick={() => {
+            console.log("Print try again");
+          }}
+        >
+          try
+        </div>
+
         <div className="">
           <input
+            className="punch"
             type="range"
             min={1}
             max={10}
@@ -187,7 +265,7 @@ const App = () => {
               handleSeekTime(value);
             }}
           />
-          <h2 className="text-white text-center">Seek Time: {seekTime}</h2>
+          <h2 className="text-white text-center ">Seek Time: {seekTime}</h2>
         </div>
       </div>
     </div>

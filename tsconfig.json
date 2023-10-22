@@ -20,6 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "public/background.js", "auto-trigger.js", "auto-trigger.js"],
+  "include": ["src", "public/background.ts", "auto-trigger.js", "auto-trigger.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
