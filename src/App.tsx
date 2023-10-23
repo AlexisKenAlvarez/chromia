@@ -1,34 +1,34 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import "regenerator-runtime/runtime";
 
-import axios from "axios";
-
 const App = () => {
   const [seekTime, handleSeekTime] = useState<number>(5);
   const [listening, setListening] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.post(
-          "https://thesis-server.vercel.app/api/v1/getPage",
-          {
-            presentationId: "1vda8wfRwSpOqSKgkzHc6qaPJTFVYBmVkSh1FefIerPs",
-          }
-        );
+  // document.getElementById('overheard').firstChild.innerHTML
 
-        const data = res.data;
-        console.log(data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const res = await axios.post(
+  //         "https://thesis-server.vercel.app/api/v1/getPage",
+  //         {
+  //           presentationId: "1vda8wfRwSpOqSKgkzHc6qaPJTFVYBmVkSh1FefIerPs",
+  //         }
+  //       );
 
-    fetchData(); // Call the async function here
-  }, []);
+  //       const data = res.data;
+  //       console.log(data);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+
+  //   fetchData(); // Call the async function here
+  // }, []);
 
   const commands = [
     {
@@ -58,7 +58,7 @@ const App = () => {
     {
       command: ["go"],
       callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
-        handleNext(), resetTranscript();
+        handlePage("next"), resetTranscript();
       },
     },
   ];
@@ -111,12 +111,13 @@ const App = () => {
     });
   };
 
-  const handleNext = async () => {
+  const handlePage = async (type: string) => {
     let [tab] = await chrome.tabs.query({ active: true });
     chrome.scripting.executeScript({
       target: { tabId: tab.id! },
       world: "MAIN",
-      func: () => {
+
+      func: (type: string) => {
         var simulateMouseEvent = function (
           element: any,
           eventName: any,
@@ -135,50 +136,33 @@ const App = () => {
           );
         };
 
-        let elementToClick = document.querySelectorAll(
-          "div[role=button]"
-        )[1]
+        if (type === 'next') {
+          let elementToClick = document.querySelectorAll("div[role=button]")[1];
 
-        // Check if the element has an onclick attribute
-        var box = elementToClick.getBoundingClientRect(),
-          coordX = box.left + (box.right - box.left) / 2,
-          coordY = box.top + (box.bottom - box.top) / 2;
+          // Check if the element has an onclick attribute
+          var box = elementToClick.getBoundingClientRect(),
+            coordX = box.left + (box.right - box.left) / 2,
+            coordY = box.top + (box.bottom - box.top) / 2;
+  
+          simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
+          simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
+          simulateMouseEvent(elementToClick, "click", coordX, coordY);
+        } else {
+          let elementToClick = document.querySelectorAll("div[role=button]")[0];
 
-        simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
-        simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
-        simulateMouseEvent(elementToClick, "click", coordX, coordY);
+          // Check if the element has an onclick attribute
+          var box = elementToClick.getBoundingClientRect(),
+            coordX = box.left + (box.right - box.left) / 2,
+            coordY = box.top + (box.bottom - box.top) / 2;
+  
+          simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
+          simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
+          simulateMouseEvent(elementToClick, "click", coordX, coordY);
+        }
+       
       },
+      args: [type],
     });
-
-    // var simulateMouseEvent = function (
-    //   element: any,
-    //   eventName: any,
-    //   coordX: any,
-    //   coordY: any
-    // ) {
-    //   element.dispatchEvent(
-    //     new MouseEvent(eventName, {
-    //       view: window,
-    //       bubbles: true,
-    //       cancelable: true,
-    //       clientX: coordX,
-    //       clientY: coordY,
-    //       button: 0,
-    //     })
-    //   );
-    // };
-
-    // let elementToClick = document.querySelectorAll("div[role=button]")[1];
-
-    // setTimeout(() => {
-    //   var box = elementToClick.getBoundingClientRect(),
-    //     coordX = box.left + (box.right - box.left) / 2,
-    //     coordY = box.top + (box.bottom - box.top) / 2;
-
-    //   simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
-    //   simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
-    //   simulateMouseEvent(elementToClick, "click", coordX, coordY);
-    // }, 500);
   };
 
   if (!browserSupportsSpeechRecognition) {
@@ -238,8 +222,22 @@ const App = () => {
           Stop Mic
         </button>
 
-        <button className="bg-white px-5 py-2" onClick={handleNext}>
+        <button
+          className="bg-white px-5 py-2"
+          onClick={() => {
+            handlePage("next");
+          }}
+        >
           Go next
+        </button>
+
+        <button
+          className="bg-white px-5 py-2"
+          onClick={() => {
+            handlePage("back");
+          }}
+        >
+          Go back
         </button>
 
         <div
