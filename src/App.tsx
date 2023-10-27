@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -7,28 +7,6 @@ import "regenerator-runtime/runtime";
 const App = () => {
   const [seekTime, handleSeekTime] = useState<number>(5);
   const [listening, setListening] = useState(false);
-
-  // document.getElementById('overheard').firstChild.innerHTML
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const res = await axios.post(
-  //         "https://thesis-server.vercel.app/api/v1/getPage",
-  //         {
-  //           presentationId: "1vda8wfRwSpOqSKgkzHc6qaPJTFVYBmVkSh1FefIerPs",
-  //         }
-  //       );
-
-  //       const data = res.data;
-  //       console.log(data);
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   };
-
-  //   fetchData(); // Call the async function here
-  // }, []);
 
   const commands = [
     {
@@ -46,6 +24,7 @@ const App = () => {
     {
       command: ["skip"],
       callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        console.log("Inside skip");
         handleSeek("forward"), resetTranscript();
       },
     },
@@ -56,9 +35,17 @@ const App = () => {
       },
     },
     {
-      command: ["go"],
+      command: ["next"],
       callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        console.log("Next slide");
         handlePage("next"), resetTranscript();
+      },
+    },
+    {
+      command: ["back"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        console.log("Previous slide");
+        handlePage("back"), resetTranscript();
       },
     },
   ];
@@ -67,9 +54,22 @@ const App = () => {
     transcript,
     browserSupportsSpeechRecognition,
     isMicrophoneAvailable,
-  } = useSpeechRecognition({ commands });
+    resetTranscript,
+  } = useSpeechRecognition({ clearTranscriptOnListen: true });
 
-  console.log(transcript);
+  useEffect(() => {
+    console.log(transcript);
+    commands.map((items) => {
+      if (!items.command.includes(transcript)) {
+        setTimeout(() => {
+          resetTranscript();
+        }, 1000);
+      } else {
+        console.log(transcript);
+        items.callback({ resetTranscript });
+      }
+    });
+  }, [transcript]);
 
   const handlePlayback = async (type: string) => {
     let [tab] = await chrome.tabs.query({ active: true });
@@ -113,8 +113,9 @@ const App = () => {
 
   const handlePage = async (type: string) => {
     let [tab] = await chrome.tabs.query({ active: true });
+    console.log(tab);
     chrome.scripting.executeScript({
-      target: { tabId: tab.id! },
+      target: { tabId: tab.id!, allFrames: true },
       world: "MAIN",
 
       func: (type: string) => {
@@ -136,14 +137,15 @@ const App = () => {
           );
         };
 
-        if (type === 'next') {
+        if (type === "next") {
           let elementToClick = document.querySelectorAll("div[role=button]")[1];
+          console.log(document.querySelectorAll("div[role=button]"));
 
           // Check if the element has an onclick attribute
           var box = elementToClick.getBoundingClientRect(),
             coordX = box.left + (box.right - box.left) / 2,
             coordY = box.top + (box.bottom - box.top) / 2;
-  
+
           simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
           simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
           simulateMouseEvent(elementToClick, "click", coordX, coordY);
@@ -154,12 +156,11 @@ const App = () => {
           var box = elementToClick.getBoundingClientRect(),
             coordX = box.left + (box.right - box.left) / 2,
             coordY = box.top + (box.bottom - box.top) / 2;
-  
+
           simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
           simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
           simulateMouseEvent(elementToClick, "click", coordX, coordY);
         }
-       
       },
       args: [type],
     });
@@ -239,16 +240,6 @@ const App = () => {
         >
           Go back
         </button>
-
-        <div
-          className="bg-white px-5 py-2 test"
-          role="button"
-          onClick={() => {
-            console.log("Print try again");
-          }}
-        >
-          try
-        </div>
 
         <div className="">
           <input
