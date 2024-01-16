@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import "regenerator-runtime/runtime";
+import { cn } from "./utils/utils";
 
 const App = () => {
   const [seekTime, handleSeekTime] = useState<number>(5);
   const [listening, setListening] = useState(false);
+  const [hidden, setHidden] = useState(false)
 
   const commands = [
     {
@@ -48,28 +50,27 @@ const App = () => {
         handlePage("back"), resetTranscript();
       },
     },
+    {
+      command: ["hide"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        console.log("Previous slide");
+        setHidden(true), resetTranscript();
+      },
+    },
+    {
+      command: ["show"],
+      callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
+        console.log("Previous slide");
+        setHidden(false), resetTranscript();
+      },
+    },
   ];
 
   const {
     transcript,
     browserSupportsSpeechRecognition,
     isMicrophoneAvailable,
-    resetTranscript,
-  } = useSpeechRecognition({ clearTranscriptOnListen: true });
-
-  useEffect(() => {
-    console.log(transcript);
-    commands.map((items) => {
-      if (!items.command.includes(transcript)) {
-        setTimeout(() => {
-          resetTranscript();
-        }, 1000);
-      } else {
-        console.log(transcript);
-        items.callback({ resetTranscript });
-      }
-    });
-  }, [transcript]);
+  } = useSpeechRecognition({ clearTranscriptOnListen: true, commands });
 
   const handlePlayback = async (type: string) => {
     let [tab] = await chrome.tabs.query({ active: true });
@@ -186,7 +187,9 @@ const App = () => {
   }
 
   return (
-    <div className="w-[20rem] h-[25rem] bg-black p-10">
+    <div className={cn("w-[20rem] h-[25rem] bg-black p-10 opacity-100 transition-all ease-in-out duration-300 max-h-full overflow-hidden", {
+      "opacity-0 max-h-0 p-0": hidden,
+    })}>
       <h1 className="text-white text-2xl text-center">
         {listening ? "Now listening" : "Not listening"}
       </h1>
