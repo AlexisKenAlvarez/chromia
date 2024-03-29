@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "HandyPlay",
+  "name": "Thesis",
   "version": "1.0.1",
   "action": {
     "default_popup": "index.html"
@@ -10,7 +10,8 @@
     "activeTab",
     "tabs",
     "storage",
-    "nativeMessaging"
+    "nativeMessaging",
+    "unlimitedStorage"
   ],
   "options_page": "options.html",
   "host_permissions": ["http://*/*", "https://*/*"]
