@@ -11,9 +11,10 @@
     "tabs",
     "storage",
     "nativeMessaging",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "sidePanel",
+    "webNavigation"
   ],
   "options_page": "options.html",
   "host_permissions": ["http://*/*", "https://*/*"]
-
 }

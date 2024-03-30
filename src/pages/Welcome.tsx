@@ -2,25 +2,22 @@ import { Button } from "@/components/ui/button";
 import Container from "../components/Container";
 // import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Welcome = () => {
-  const [
-    loading,
-    // setLoading
-  ] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   chrome.storage.sync.get(["onBoarded"], (result) => {
-  //     if (result.onBoarded) {
-  //       navigate("/home");
-  //     } else {
-  //       setLoading(false);
-  //     }
-  //   });
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
+  useEffect(() => {
+    chrome.storage.sync.get(["onBoarded"], (result) => {
+      if (result.onBoarded) {
+        navigate("/home");
+      } else {
+        setLoading(false);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -83,9 +80,7 @@ const Welcome = () => {
         <Button
           className="w-full"
           onClick={() => {
-            chrome.storage.sync.set({ onBoarded: true }, () => {
-              alert("Onboarding completed");
-            });
+            chrome.storage.sync.set({ onBoarded: true }, () => {});
             navigate("/home");
           }}
         >

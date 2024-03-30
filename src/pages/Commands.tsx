@@ -1,9 +1,13 @@
 import Container from "@/components/Container";
 import MediaControlSettings from "@/components/MediaControlSettings";
 import NavigationControlSettings from "@/components/NavigationControlSettings";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowBigLeftDash } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Commands = () => {
+  const navigate = useNavigate();
   const commandOptions = [
     {
       value: "media",
@@ -17,7 +21,17 @@ const Commands = () => {
 
   return (
     <Container>
-      <h1 className="font-bold text-center">Settings</h1>
+      <div className="flex items-center gap-2 ">
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/home")}
+          className="flex items-center gap-2 mr-2"
+        >
+          <ArrowBigLeftDash size={28} strokeWidth={1} />
+          <p className="">Back</p>
+        </Button>
+        <h1 className="font-bold">Settings</h1>
+      </div>
       <Tabs defaultValue="media" className="mt-3">
         <TabsList className="w-full">
           <TabsTrigger value="media" className="w-full">

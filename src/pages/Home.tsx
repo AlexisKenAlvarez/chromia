@@ -10,7 +10,7 @@ import "regenerator-runtime/runtime";
 import { cn } from "../utils/utils";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { CircleHelp, Settings, Info } from "lucide-react";
+import { CircleHelp, Settings, Info, AppWindow } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -23,12 +23,20 @@ import { useCommandValues } from "@/store/commandsStore";
 const Home = () => {
   const hidden = useCommandValues((state) => state.hidden);
   const mediaCommands = useCommandValues((state) => state.mediaCommands);
+  const updateNavigationCommands = useCommandValues(
+    (state) => state.updateNavigationCommands
+  );
+
   const updateMediaCommands = useCommandValues(
     (state) => state.updateMediaCommands
   );
+
   const navigationCommands = useCommandValues(
     (state) => state.navigationCommands
   );
+
+  const openCommand = useCommandValues((state) => state.openCommand);
+
   const [seekTime, setSeekTime] = useState<number>(5);
   const [listening, setListening] = useState(false);
 
@@ -73,11 +81,31 @@ const Home = () => {
       }
     });
 
+    if (openCommand.command.includes(transcript.split(" ")[0])) {
+      openCommand.callback(transcript.split(" ")[1]);
+    }
+
     return () => {
       clearTimeout(myTimeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript]);
+
+  useEffect(() => {
+    chrome.storage.sync.get("mediaCommands", function (data) {
+      if (data.mediaCommands) {
+        updateMediaCommands(data.mediaCommands as typeof mediaCommands);
+      }
+    });
+
+    chrome.storage.sync.get("navigationCommands", function (data) {
+      if (data.mediaCommands) {
+        updateNavigationCommands(
+          data.navigationCommands as typeof navigationCommands
+        );
+      }
+    });
+  }, []);
 
   if (!browserSupportsSpeechRecognition) {
     return (
@@ -97,27 +125,6 @@ const Home = () => {
       </div>
     );
   }
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    chrome.storage.sync.get("mediaCommands", function (data) {
-      if (data.mediaCommands) {
-        updateMediaCommands(data.mediaCommands as typeof mediaCommands);
-      }
-    });
-
-
-
-    // chrome.storage.sync.get("navigationCommands", function (data) {
-    //   if (data) {
-    //     useCommandValues.setState({
-    //       navigationCommands:
-    //         data.navigationCommands as typeof navigationCommands,
-    //     });
-    //   }
-    // });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div
@@ -239,6 +246,13 @@ const Home = () => {
 
       <div className="space-y-1 mt-3">
         <Separator className="mb-3" />
+        <button
+          className="flex items-center gap-2 opacity-80 hover:opacity-100 text-sm"
+          onClick={() => chrome.tabs.create({ url: "index.html" })}
+        >
+          <AppWindow size={18} />
+          <p>Open in background</p>
+        </button>
         {navigations.map((nav) => (
           <a
             href={`#/${nav.link}`}

@@ -17,12 +17,16 @@ import {
 
 import { useCommandValues } from "@/store/commandsStore";
 import { AnimatePresence, motion } from "framer-motion";
+import { CircleX } from "lucide-react";
 
 const MediaControlSettings = () => {
   const mediaCommands = useCommandValues((state) => state.mediaCommands);
   const [addingTo, setAddingTo] = useState("");
 
   const setMediaCommands = useCommandValues((state) => state.setMediaCommands);
+  const deleteMediaCommand = useCommandValues(
+    (state) => state.deleteMediaCommand
+  );
 
   const newCommandForm = z.object({
     command: z
@@ -77,13 +81,44 @@ const MediaControlSettings = () => {
         <div className="" key={index}>
           <h1 className="capitalize font-medium">{item.label}</h1>
           <ul className="flex gap-1 mt-1 items-stretch flex-wrap">
-            {item.command.map((item) => (
-              <li className="" key={item}>
+            {item.command.map((cmd) => (
+              <li className="relative group" key={cmd}>
+                <button
+                  className="absolute -right-1 -top-1 group-hover:opacity-100 opacity-0"
+                  onClick={() => {
+                    chrome.storage.sync.set(
+                      {
+                        mediaCommands: [
+                          ...mediaCommands.map((itm) => {
+                            if (itm.label === item.label) {
+                              return {
+                                command: itm.command.filter((c) => c !== cmd),
+                                label: itm.label,
+                              };
+                            }
+
+                            return {
+                              command: itm.command,
+                              label: itm.label,
+                            };
+                          }),
+                        ],
+                      },
+                      function () {
+                        console.log("SINET ULET MEDIA COMMANDS 2");
+                      }
+                    );
+
+                    deleteMediaCommand({ command: cmd, label: item.label });
+                  }}
+                >
+                  <CircleX size={18} color="red" fill="red" stroke="white" />
+                </button>
                 <Badge
                   className="flex h-full items-center px-4 rounded-md"
                   variant="outline"
                 >
-                  <p className="">{item}</p>
+                  <p className="">{cmd}</p>
                 </Badge>
               </li>
             ))}

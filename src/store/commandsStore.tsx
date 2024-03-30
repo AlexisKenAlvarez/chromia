@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { WEBSITES } from "@/lib/constants";
 import { create } from "zustand";
 
 interface StorageCommand {
@@ -19,6 +20,12 @@ interface CommandStore {
     label: string;
     callback: () => void;
   }[];
+  openCommand: {
+    command: string[];
+    label: string;
+    callback: (website: string) => void;
+  };
+
   setMediaCommands: ({
     command,
     label,
@@ -34,6 +41,22 @@ interface CommandStore {
     label: string;
   }) => void;
   updateMediaCommands: (updated: StorageCommand[]) => void;
+  updateNavigationCommands: (updated: StorageCommand[]) => void;
+
+  deleteMediaCommand: ({
+    command,
+    label,
+  }: {
+    command: string;
+    label: string;
+  }) => void;
+  deleteNavigationCommand: ({
+    command,
+    label,
+  }: {
+    command: string;
+    label: string;
+  }) => void;
 }
 
 export const useCommandValues = create<CommandStore>()((set) => ({
@@ -70,6 +93,20 @@ export const useCommandValues = create<CommandStore>()((set) => ({
         handleSeek("backward");
       },
     },
+    {
+      command: ["fullscreen"],
+      label: "fullscreen",
+      callback: () => {
+        handleFullScreen("full");
+      },
+    },
+    {
+      command: ["exit"],
+      label: "exit",
+      callback: () => {
+        handleFullScreen("exit");
+      },
+    },
   ],
 
   updateMediaCommands: (updated: StorageCommand[]) =>
@@ -83,6 +120,26 @@ export const useCommandValues = create<CommandStore>()((set) => ({
           return { ...mediaCommand, command: updatedCommand.command };
         }
         return mediaCommand;
+      }),
+    })),
+
+  deleteMediaCommand: ({
+    command,
+    label,
+  }: {
+    command: string;
+    label: string;
+  }) =>
+    set((state) => ({
+      mediaCommands: state.mediaCommands.map((item) => {
+        if (item.label === label) {
+          return {
+            command: item.command.filter((cmd: string) => cmd !== command),
+            label: label,
+            callback: item.callback,
+          };
+        }
+        return item;
       }),
     })),
 
@@ -130,7 +187,44 @@ export const useCommandValues = create<CommandStore>()((set) => ({
         handleUI("show");
       },
     },
+    {
+      command: ["close tab"],
+      label: "Close tab",
+      callback: () => {
+        try {
+          chrome.tabs.query(
+            { currentWindow: true, active: true },
+            function (tabs) {
+              chrome.tabs.remove(tabs[0].id!, function () {});
+            }
+          );
+        } catch (error) {
+          console.log(error);
+          console.log("No tab to close");
+        }
+      },
+    },
   ],
+  deleteNavigationCommand: ({
+    command,
+    label,
+  }: {
+    command: string;
+    label: string;
+  }) =>
+    set((state) => ({
+      navigationCommands: state.navigationCommands.map((item) => {
+        if (item.label === label) {
+          return {
+            command: item.command.filter((cmd: string) => cmd !== command),
+            label: label,
+            callback: item.callback,
+          };
+        }
+        return item;
+      }),
+    })),
+
   setNavigationCommands: ({
     command,
     label,
@@ -139,7 +233,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
     label: string;
   }) =>
     set((state) => ({
-      mediaCommands: state.mediaCommands.map((item) => {
+      navigationCommands: state.navigationCommands.map((item) => {
         if (item.label === label) {
           return {
             command: [...item.command, command],
@@ -150,6 +244,30 @@ export const useCommandValues = create<CommandStore>()((set) => ({
         return item;
       }),
     })),
+  updateNavigationCommands: (updated: StorageCommand[]) =>
+    set((state) => ({
+      navigationCommands: state.navigationCommands.map((navigationCommand) => {
+        const updatedCommand = updated.find(
+          (updatedCommand) => updatedCommand.label === navigationCommand.label
+        );
+
+        if (updatedCommand) {
+          return { ...navigationCommand, command: updatedCommand.command };
+        }
+        return navigationCommand;
+      }),
+    })),
+  openCommand: {
+    command: ["open"],
+    label: "open",
+    callback: (website: string) => {
+      WEBSITES.map((site) => {
+        if (site.command.includes(website)) {
+          chrome.tabs.create({ url: site.url });
+        }
+      });
+    },
+  },
 }));
 
 const handleUI = (type: "show" | "hide") => {
@@ -174,6 +292,26 @@ const handlePlayback = async (type: "pause" | "play") => {
           videoElem.pause();
         } else {
           videoElem.play();
+        }
+      }
+    },
+    args: [type],
+  });
+};
+
+const handleFullScreen = async (type: string) => {
+  const [tab] = await chrome.tabs.query({ active: true });
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id! },
+    world: "MAIN",
+    func: (type) => {
+      const videoElem = document.querySelector("video");
+
+      if (videoElem && videoElem instanceof HTMLVideoElement) {
+        if (type === "exit") {
+          document.exitFullscreen();
+        } else {
+          if (videoElem.requestFullscreen) videoElem.requestFullscreen();
         }
       }
     },
