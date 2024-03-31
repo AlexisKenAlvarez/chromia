@@ -167,7 +167,7 @@ export const WEBSITES = [
   },
   {
     command: ["blank"],
-    name: "blank",
+    name: "Blank (New Tab)",
     url: "",
   },
 ];

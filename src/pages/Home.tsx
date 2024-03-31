@@ -101,21 +101,21 @@ const Home = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript]);
 
-  // useEffect(() => {
-  //   chrome.storage.sync.get("mediaCommands", function (data) {
-  //     if (data.mediaCommands) {
-  //       updateMediaCommands(data.mediaCommands as typeof mediaCommands);
-  //     }
-  //   });
+  useEffect(() => {
+    chrome.storage.sync.get("mediaCommands", function (data) {
+      if (data.mediaCommands) {
+        updateMediaCommands(data.mediaCommands as typeof mediaCommands);
+      }
+    });
 
-  //   chrome.storage.sync.get("navigationCommands", function (data) {
-  //     if (data.mediaCommands) {
-  //       updateNavigationCommands(
-  //         data.navigationCommands as typeof navigationCommands
-  //       );
-  //     }
-  //   });
-  // }, []);
+    chrome.storage.sync.get("navigationCommands", function (data) {
+      if (data.mediaCommands) {
+        updateNavigationCommands(
+          data.navigationCommands as typeof navigationCommands
+        );
+      }
+    });
+  }, []);
 
   if (!browserSupportsSpeechRecognition) {
     return (
