@@ -2,25 +2,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-const */
 
-import { useEffect, useState } from "react";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
-import "regenerator-runtime/runtime";
-import { cn } from "../utils/utils";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { CircleHelp, Settings, Info, AppWindow } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
 import { useCommandValues } from "@/store/commandsStore";
+import { AppWindow, CircleHelp, Info, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
+import "regenerator-runtime/runtime";
+import { cn } from "../utils/utils";
 
 const Home = () => {
+  const [previousWord, setPreviousWord] = useState("");
   const hidden = useCommandValues((state) => state.hidden);
   const mediaCommands = useCommandValues((state) => state.mediaCommands);
   const updateNavigationCommands = useCommandValues(
@@ -36,13 +37,14 @@ const Home = () => {
   );
 
   const openCommand = useCommandValues((state) => state.openCommand);
+  const searchCommand = useCommandValues((state) => state.searchCommand);
 
   const [seekTime, setSeekTime] = useState<number>(5);
   const [listening, setListening] = useState(false);
 
   const navigations = [
     {
-      label: "Edit Command Settings",
+      label: "Command Settings",
       link: "commands",
       icon: Settings,
     },
@@ -62,8 +64,9 @@ const Home = () => {
 
   useEffect(() => {
     const myTimeout = setTimeout(() => {
+      setPreviousWord(transcript);
       resetTranscript();
-    }, 1000);
+    }, 1500);
 
     if (transcript !== "") {
       myTimeout;
@@ -82,7 +85,14 @@ const Home = () => {
     });
 
     if (openCommand.command.includes(transcript.split(" ")[0])) {
-      openCommand.callback(transcript.split(" ")[1]);
+      const word = transcript.split(" ");
+
+      openCommand.callback(word[word.length - 1]);
+    }
+
+    if (searchCommand.command.includes(previousWord.split(" ")[0])) {
+      const word = previousWord.split(" ").slice(1).join(" ");
+      searchCommand.callback(word);
     }
 
     return () => {
@@ -91,21 +101,21 @@ const Home = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript]);
 
-  useEffect(() => {
-    chrome.storage.sync.get("mediaCommands", function (data) {
-      if (data.mediaCommands) {
-        updateMediaCommands(data.mediaCommands as typeof mediaCommands);
-      }
-    });
+  // useEffect(() => {
+  //   chrome.storage.sync.get("mediaCommands", function (data) {
+  //     if (data.mediaCommands) {
+  //       updateMediaCommands(data.mediaCommands as typeof mediaCommands);
+  //     }
+  //   });
 
-    chrome.storage.sync.get("navigationCommands", function (data) {
-      if (data.mediaCommands) {
-        updateNavigationCommands(
-          data.navigationCommands as typeof navigationCommands
-        );
-      }
-    });
-  }, []);
+  //   chrome.storage.sync.get("navigationCommands", function (data) {
+  //     if (data.mediaCommands) {
+  //       updateNavigationCommands(
+  //         data.navigationCommands as typeof navigationCommands
+  //       );
+  //     }
+  //   });
+  // }, []);
 
   if (!browserSupportsSpeechRecognition) {
     return (
@@ -129,7 +139,7 @@ const Home = () => {
   return (
     <div
       className={cn(
-        "w-[450px] h-[500px] p-10 opacity-100 transition-all ease-in-out duration-300 max-h-full overflow-hidden text-black flex flex-col justify-between pb-24",
+        "w-[450px] h-[500px] p-10 opacity-100 border transition-all ease-in-out duration-300 max-h-full overflow-hidden text-black flex flex-col justify-between pb-24",
         {
           "opacity-0 max-h-0 !p-0 w-0": hidden,
         }

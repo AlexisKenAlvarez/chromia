@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from "react-router-dom";
 import Commands from "./pages/Commands";
 import Home from "./pages/Home";
 import Welcome from "./pages/Welcome";
+import WebList from "./pages/WebList";
 
 const App = () => {
   return (
@@ -14,9 +15,10 @@ const App = () => {
 
       <HashRouter>
         <Routes>
-          <Route path="/" element={<Welcome />} />
+          <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/commands" element={<Commands />} />
+          <Route path="/weblist" element={<WebList />} />
         </Routes>
       </HashRouter>
     </div>

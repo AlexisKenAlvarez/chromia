@@ -25,6 +25,11 @@ interface CommandStore {
     label: string;
     callback: (website: string) => void;
   };
+  searchCommand: {
+    command: string[];
+    label: string;
+    callback: (term: string) => void;
+  };
 
   setMediaCommands: ({
     command,
@@ -204,6 +209,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
         }
       },
     },
+   
   ],
   deleteNavigationCommand: ({
     command,
@@ -258,7 +264,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       }),
     })),
   openCommand: {
-    command: ["open"],
+    command: ["open", "go"],
     label: "open",
     callback: (website: string) => {
       WEBSITES.map((site) => {
@@ -268,14 +274,43 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       });
     },
   },
+  searchCommand: {
+    command: ["search"],
+    label: "search",
+    callback: (term: string) => {
+      try {
+        chrome.tabs.query(
+          { currentWindow: true, active: true },
+          function (tabs) {
+            const url = new URL(tabs[0].url!).origin;
+
+            if (url === "https://www.youtube.com") {
+              chrome.tabs.create({
+                url: `${url}/results?search_query=${term}`,
+              });
+            } else if (url === "https://www.facebook.com") {
+              chrome.tabs.create({ url: `${url}/search/top?q=${term}` });
+            } else {
+              chrome.tabs.create({
+                url: `https://www.google.com/search?q=${term}`,
+              });
+            }
+          }
+        );
+      } catch (error) {
+        console.log(error);
+        console.log("No tab to close");
+      }
+    },
+  },
 }));
 
 const handleUI = (type: "show" | "hide") => {
-  // if (type === "show") {
-  //   useCommandValues.setState({ hidden: false });
-  // } else {
-  //   useCommandValues.setState({ hidden: true });
-  // }
+  if (type === "show") {
+    useCommandValues.setState({ hidden: false });
+  } else {
+    useCommandValues.setState({ hidden: true });
+  }
   console.log(type);
 };
 

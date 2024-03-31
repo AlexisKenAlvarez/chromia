@@ -165,4 +165,9 @@ export const WEBSITES = [
     name: "roblox",
     url: "https://www.roblox.com/discover#/",
   },
+  {
+    command: ["blank"],
+    name: "blank",
+    url: "",
+  },
 ];

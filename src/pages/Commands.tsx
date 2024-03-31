@@ -1,4 +1,5 @@
 import Container from "@/components/Container";
+import FixedCommands from "@/components/FixedCommands";
 import MediaControlSettings from "@/components/MediaControlSettings";
 import NavigationControlSettings from "@/components/NavigationControlSettings";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,10 @@ const Commands = () => {
       value: "navigation",
       component: NavigationControlSettings,
     },
+    {
+      value: "Fixed Commands",
+      component: FixedCommands,
+    },
   ];
 
   return (
@@ -32,18 +37,21 @@ const Commands = () => {
         </Button>
         <h1 className="font-bold">Settings</h1>
       </div>
-      <Tabs defaultValue="media" className="mt-3">
+      <Tabs defaultValue="media" className="mt-3 pb-5">
         <TabsList className="w-full">
-          <TabsTrigger value="media" className="w-full">
-            Media
-          </TabsTrigger>
-          <TabsTrigger value="navigation" className="w-full">
-            Navigation
-          </TabsTrigger>
+          {commandOptions.map((item) => (
+            <TabsTrigger
+              value={item.value}
+              key={item.value}
+              className="w-full capitalize"
+            >
+              {item.value}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         {commandOptions.map((item) => (
-          <TabsContent value={item.value}>
+          <TabsContent value={item.value} key={item.value}>
             <item.component />
           </TabsContent>
         ))}
