@@ -9,7 +9,7 @@ const App = () => {
     <div className="w-[450px] h-[500px] relative">
       <div className="space-y-2 text-center">
         <h1 className="font-bold text-lg py-2">
-          Google Chrome Extension for Navigation
+          Voice Command Chrome Assistant
         </h1>
       </div>
 

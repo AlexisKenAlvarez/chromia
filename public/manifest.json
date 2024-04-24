@@ -5,6 +5,14 @@
   "action": {
     "default_popup": "index.html"
   },
+  "icons": {
+    "16": "favicon-16x16.png",
+    "48": "favicon.ico",
+    "128": "favicon.ico"
+  },
+  "browser_action": {
+    "deault_icon": "favicon-32x32.png"
+  },
   "permissions": [
     "scripting",
     "activeTab",

@@ -22,6 +22,7 @@ import { cn } from "../utils/utils";
 
 const Home = () => {
   const [previousWord, setPreviousWord] = useState("");
+  const active = useCommandValues((state) => state.active);
   const hidden = useCommandValues((state) => state.hidden);
   const mediaCommands = useCommandValues((state) => state.mediaCommands);
   const updateNavigationCommands = useCommandValues(
@@ -66,33 +67,41 @@ const Home = () => {
     const myTimeout = setTimeout(() => {
       setPreviousWord(transcript);
       resetTranscript();
-    }, 1500);
+    }, 1200);
 
     if (transcript !== "") {
       myTimeout;
     }
 
-    mediaCommands.forEach((command) => {
-      if (command.command.includes(transcript)) {
-        command.callback();
+    if (active) {
+      mediaCommands.forEach((command) => {
+        if (command.command.includes(transcript)) {
+          command.callback();
+        }
+      });
+
+      navigationCommands.forEach((command) => {
+        if (command.command.includes(transcript)) {
+          command.callback();
+        }
+      });
+
+      if (openCommand.command.includes(previousWord.split(" ")[0])) {
+        const word = previousWord.split(" ");
+
+        openCommand.callback(word[word.length - 1]);
       }
-    });
 
-    navigationCommands.forEach((command) => {
-      if (command.command.includes(transcript)) {
-        command.callback();
+      if (searchCommand.command.includes(previousWord.split(" ")[0])) {
+        const word = previousWord.split(" ").slice(1).join(" ");
+        searchCommand.callback(word);
       }
-    });
-
-    if (openCommand.command.includes(transcript.split(" ")[0])) {
-      const word = transcript.split(" ");
-
-      openCommand.callback(word[word.length - 1]);
     }
 
-    if (searchCommand.command.includes(previousWord.split(" ")[0])) {
-      const word = previousWord.split(" ").slice(1).join(" ");
-      searchCommand.callback(word);
+    if (transcript === "start listening") {
+      useCommandValues.setState({ active: true });
+    } else if (transcript === "stop listening") {
+      useCommandValues.setState({ active: false });
     }
 
     return () => {
@@ -185,7 +194,7 @@ const Home = () => {
           className={cn(
             "w-28 h-14 rounded-full relative mx-auto bg-slate-300 grid place-content-center",
             {
-              "bg-green-400": listening,
+              "bg-green-400": listening || active,
             }
           )}
         >
@@ -194,18 +203,22 @@ const Home = () => {
               "w-full h-full rounded-full absolute top-0 left-0 mx-auto bg-slate-300",
               {
                 "animate-ping": transcript !== "",
-                "bg-green-400": listening,
+                "bg-green-400": listening || active,
               }
             )}
           ></div>
-          <p className="relative z-10 text-sm text-white text-center">
-            {transcript}
-          </p>
+          {active && (
+            <p className="relative z-10 text-sm text-white text-center">
+              {transcript}
+            </p>
+          )}
         </div>
         <Button
           className=" px-5 py-2 w-full mt-6"
           onClick={async () => {
             if (listening) {
+              useCommandValues.setState({ active: false });
+
               setListening(false);
               SpeechRecognition.abortListening();
             } else {
@@ -213,6 +226,7 @@ const Home = () => {
                 .getUserMedia({ audio: true, video: false })
                 .then(function () {
                   setListening(true);
+                  useCommandValues.setState({ active: true });
                   SpeechRecognition.startListening({ continuous: true });
                 })
                 .catch(function (error) {

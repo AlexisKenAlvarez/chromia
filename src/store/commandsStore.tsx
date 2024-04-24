@@ -62,9 +62,11 @@ interface CommandStore {
     command: string;
     label: string;
   }) => void;
+  active: boolean
 }
 
 export const useCommandValues = create<CommandStore>()((set) => ({
+  active: false,
   hidden: false,
   setHidden: (value: boolean) => set(() => ({ hidden: value })),
 
@@ -99,7 +101,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
-      command: ["fullscreen"],
+      command: ["fullscreen", "full screen"],
       label: "fullscreen",
       callback: () => {
         handleFullScreen("full");
