@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Thesis",
+  "name": "Chromia",
   "version": "1.0.1",
   "action": {
     "default_popup": "index.html"
@@ -10,18 +10,11 @@
     "48": "favicon.ico",
     "128": "favicon.ico"
   },
-  "browser_action": {
-    "deault_icon": "favicon-32x32.png"
-  },
   "permissions": [
     "scripting",
     "activeTab",
     "tabs",
-    "storage",
-    "nativeMessaging",
-    "unlimitedStorage",
-    "sidePanel",
-    "webNavigation"
+    "storage"
   ],
   "options_page": "options.html",
   "host_permissions": ["http://*/*", "https://*/*"]

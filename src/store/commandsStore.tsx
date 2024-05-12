@@ -62,7 +62,7 @@ interface CommandStore {
     command: string;
     label: string;
   }) => void;
-  active: boolean
+  active: boolean;
 }
 
 export const useCommandValues = create<CommandStore>()((set) => ({
@@ -101,6 +101,13 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
+      command: ["next"],
+      label: "Next Video",
+      callback: () => {
+        handleNext();
+      },
+    },
+    {
       command: ["fullscreen", "full screen"],
       label: "fullscreen",
       callback: () => {
@@ -109,7 +116,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
     },
     {
       command: ["exit"],
-      label: "exit",
+      label: "Exit fullscreen",
       callback: () => {
         handleFullScreen("exit");
       },
@@ -211,7 +218,6 @@ export const useCommandValues = create<CommandStore>()((set) => ({
         }
       },
     },
-   
   ],
   deleteNavigationCommand: ({
     command,
@@ -338,6 +344,8 @@ const handlePlayback = async (type: "pause" | "play") => {
 
 const handleFullScreen = async (type: string) => {
   const [tab] = await chrome.tabs.query({ active: true });
+  console.log("🚀 ~ handleFullScreen ~ tab:", tab);
+
   chrome.scripting.executeScript({
     target: { tabId: tab.id! },
     world: "MAIN",
@@ -428,5 +436,47 @@ const handlePage = async (type: string) => {
       }
     },
     args: [type],
+  });
+};
+
+const handleNext = async () => {
+  const [tab] = await chrome.tabs.query({ active: true });
+  console.log(tab);
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id!, allFrames: true },
+    world: "MAIN",
+
+    func: () => {
+      const simulateMouseEvent = function (
+        element: any,
+        eventName: any,
+        coordX: any,
+        coordY: any
+      ) {
+        element.dispatchEvent(
+          new MouseEvent(eventName, {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: coordX,
+            clientY: coordY,
+            button: 0,
+          })
+        );
+      };
+
+      const elementToClick = document.getElementsByClassName(
+        "ytp-next-button ytp-button"
+      )[0];
+
+      // Check if the element has an onclick attribute
+      const box = elementToClick.getBoundingClientRect(),
+        coordX = box.left + (box.right - box.left) / 2,
+        coordY = box.top + (box.bottom - box.top) / 2;
+
+      simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
+      simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
+      simulateMouseEvent(elementToClick, "click", coordX, coordY);
+    },
   });
 };
