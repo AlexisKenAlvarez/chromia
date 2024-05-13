@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { WEBSITES } from "@/lib/constants";
 import { create } from "zustand";
 
 interface StorageCommand {
@@ -275,10 +274,12 @@ export const useCommandValues = create<CommandStore>()((set) => ({
     command: ["open", "go"],
     label: "open",
     callback: (website: string) => {
-      WEBSITES.map((site) => {
-        if (site.command.includes(website)) {
-          chrome.tabs.create({ url: site.url });
-        }
+      chrome.storage.sync.get(["websites"], function (data) {
+        data.websites.map((site: { url: string, command: string[] }) => {
+          if (site.command.includes(website)) {
+            chrome.tabs.create({ url: site.url });
+          }
+        });
       });
     },
   },

@@ -18,7 +18,8 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import "regenerator-runtime/runtime";
-import { cn } from "../utils/utils";
+import { cn, extractDomainName } from "../utils/utils";
+import { WEBSITES } from "@/lib/constants";
 
 const Home = () => {
   const [previousWord, setPreviousWord] = useState("");
@@ -42,6 +43,14 @@ const Home = () => {
 
   const [seekTime, setSeekTime] = useState<number>(5);
   const [listening, setListening] = useState(false);
+  const [exist, setExist] = useState<null | boolean>(null);
+  const [iterated, setIterated] = useState(false);
+
+  interface WebsitesInterface {
+    command: string[];
+    name: string;
+    url: string;
+  }
 
   const navigations = [
     {
@@ -55,6 +64,7 @@ const Home = () => {
       icon: CircleHelp,
     },
   ];
+
 
   const {
     transcript,
@@ -111,6 +121,31 @@ const Home = () => {
   }, [transcript]);
 
   useEffect(() => {
+    chrome.storage.sync.get(["websites"], function (data) {
+      if (!data.websites) {
+        chrome.storage.sync.set({ websites: WEBSITES }, () => {});
+      }
+    });
+
+    chrome.tabs.query({}, function (tabs) {
+      tabs.forEach((tab, index) => {
+        if (tab.title === "Voice Command Chrome Assistant") {
+          setExist(true);
+        }
+
+        if (tabs.length === index + 1) {
+          setIterated(true);
+        }
+      });
+
+      if (exist === null && iterated) {
+        chrome.tabs.create({ url: "index.html" });
+        // console.log("CREATE NEW TAB");
+      }
+    });
+  }, [exist, iterated]);
+
+  useEffect(() => {
     chrome.storage.sync.get("mediaCommands", function (data) {
       if (data.mediaCommands) {
         updateMediaCommands(data.mediaCommands as typeof mediaCommands);
@@ -123,6 +158,32 @@ const Home = () => {
           data.navigationCommands as typeof navigationCommands
         );
       }
+    });
+
+    chrome.tabs.onUpdated.addListener(function (_, __, tab) {
+      const domainName = extractDomainName(tab.url ?? "");
+
+      chrome.storage.sync.get(["websites"], function (data) {
+        const websites: WebsitesInterface[] = data.websites
+
+        const isExisting = websites?.some(
+          (website) => website.name.toLowerCase() === domainName
+        );
+  
+        if (!isExisting) {
+  
+          console.log(websites);
+          console.log("This website does not exist yet ", domainName);
+        } else {
+          console.log("This website exists, ", domainName);
+        }
+      });
+     
+    });
+
+    chrome.tabs.onCreated.addListener(function (tab) {
+      console.log("🚀 ~ tab:", tab);
+      document.title = "New tab created";
     });
   }, []);
 
