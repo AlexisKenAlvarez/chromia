@@ -128,6 +128,20 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
+      command: ["louder",],
+      label: "Increase media volume",
+      callback: () => {
+        handleVolume("louder");
+      },
+    },
+    {
+      command: ["quieter",],
+      label: "Decrease media volume",
+      callback: () => {
+        handleVolume("quieter");
+      },
+    },
+    {
       command: ["skip"],
       label: "skip",
       callback: () => {
@@ -214,20 +228,20 @@ export const useCommandValues = create<CommandStore>()((set) => ({
 
   // Navigation Commands
   navigationCommands: [
-    {
-      command: ["next"],
-      label: "Next slide",
-      callback: () => {
-        handlePage("next");
-      },
-    },
-    {
-      command: ["back"],
-      label: "Previous slide",
-      callback: () => {
-        handlePage("back");
-      },
-    },
+    // {
+    //   command: ["next"],
+    //   label: "Next slide",
+    //   callback: () => {
+    //     handlePage("next");
+    //   },
+    // },
+    // {
+    //   command: ["back"],
+    //   label: "Previous slide",
+    //   callback: () => {
+    //     handlePage("back");
+    //   },
+    // },
     {
       command: ["scroll up"],
       label: "Scroll up",
@@ -459,6 +473,26 @@ const handlePlayback = async (type: "pause" | "play") => {
   });
 };
 
+const handleVolume = async (type: "louder" | "quieter") => {
+  const [tab] = await chrome.tabs.query({ active: true });
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id! },
+    world: "MAIN",
+    func: (type) => {
+      const videoElem = document.querySelector("video");
+
+      if (videoElem && videoElem instanceof HTMLVideoElement) {
+        if (type === "louder") {
+          videoElem.volume = Math.min(videoElem.volume + 0.2, 1.0);
+        } else {
+          videoElem.volume = Math.max(videoElem.volume - 0.2, 0.0);
+        }
+      }
+    },
+    args: [type],
+  });
+};
+
 const handleFullScreen = async (type: string) => {
   const [tab] = await chrome.tabs.query({ active: true });
   console.log("🚀 ~ handleFullScreen ~ tab:", tab);
@@ -501,60 +535,69 @@ const handleSeek = async (type: "backward" | "forward") => {
   });
 };
 
-const handlePage = async (type: string) => {
-  const [tab] = await chrome.tabs.query({ active: true });
-  console.log(tab);
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id!, allFrames: true },
-    world: "MAIN",
+// const handlePage = async (type: string) => {
+//   const [tab] = await chrome.tabs.query({ active: true });
+//   console.log(tab);
+//   chrome.scripting.executeScript({
+//     target: { tabId: tab.id!, allFrames: true },
+//     world: "MAIN",
 
-    func: (type: string) => {
-      const simulateMouseEvent = function (
-        element: any,
-        eventName: any,
-        coordX: any,
-        coordY: any
-      ) {
-        element.dispatchEvent(
-          new MouseEvent(eventName, {
-            view: window,
-            bubbles: true,
-            cancelable: true,
-            clientX: coordX,
-            clientY: coordY,
-            button: 0,
-          })
-        );
-      };
+//     func: (type: string) => {
+//       const simulateMouseEvent = function (
+//         element: any,
+//         eventName: any,
+//         coordX: any,
+//         coordY: any
+//       ) {
+//         element.dispatchEvent(
+//           new MouseEvent(eventName, {
+//             view: window,
+//             bubbles: true,
+//             cancelable: true,
+//             clientX: coordX,
+//             clientY: coordY,
+//             button: 0,
+//           })
+//         );
+//       };
 
-      if (type === "next") {
-        const elementToClick = document.querySelectorAll("div[role=button]")[1];
-        console.log(document.querySelectorAll("div[role=button]"));
+//       if (type === "next") {
+//         const elementToClick = document.querySelectorAll("div[role=button]")[1];
+//         console.log(document.querySelectorAll("div[role=button]"));
 
-        // Check if the element has an onclick attribute
-        const box = elementToClick.getBoundingClientRect(),
-          coordX = box.left + (box.right - box.left) / 2,
-          coordY = box.top + (box.bottom - box.top) / 2;
+//         // Check if the element has an onclick attribute
 
-        simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
-        simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
-        simulateMouseEvent(elementToClick, "click", coordX, coordY);
-      } else {
-        const elementToClick = document.querySelectorAll("div[role=button]")[0];
+//         try {
+//           const box = elementToClick?.getBoundingClientRect(),
+//             coordX = box.left + (box.right - box.left) / 2,
+//             coordY = box.top + (box.bottom - box.top) / 2;
 
-        // Check if the element has an onclick attribute
-        const box = elementToClick.getBoundingClientRect(),
-          coordX = box.left + (box.right - box.left) / 2,
-          coordY = box.top + (box.bottom - box.top) / 2;
+//           simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
+//           simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
+//           simulateMouseEvent(elementToClick, "click", coordX, coordY);
+//         } catch (error) {
+//           console.log(error);
+//         }
+//       } else {
+//         const elementToClick = document.querySelectorAll("div[role=button]")[0];
 
-        simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
-        simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
-        simulateMouseEvent(elementToClick, "click", coordX, coordY);
-      }
-    },
-    args: [type],
-  });
-};
+//         try {
+//           // Check if the element has an onclick attribute
+//           const box = elementToClick?.getBoundingClientRect(),
+//             coordX = box.left + (box.right - box.left) / 2,
+//             coordY = box.top + (box.bottom - box.top) / 2;
+
+//           simulateMouseEvent(elementToClick, "mousedown", coordX, coordY);
+//           simulateMouseEvent(elementToClick, "mouseup", coordX, coordY);
+//           simulateMouseEvent(elementToClick, "click", coordX, coordY);
+//         } catch (error) {
+//           console.log(error);
+//         }
+//       }
+//     },
+//     args: [type],
+//   });
+// };
 
 const handleNext = async () => {
   const [tab] = await chrome.tabs.query({ active: true });

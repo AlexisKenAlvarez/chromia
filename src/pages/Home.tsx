@@ -18,7 +18,7 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import "regenerator-runtime/runtime";
-import { cn, extractDomainName } from "../utils/utils";
+import { cn, extractDomainName, isChromeExtensionURL, isValidURL } from "../utils/utils";
 import { WEBSITES } from "@/lib/constants";
 import { useNavigate } from "react-router-dom";
 
@@ -165,8 +165,10 @@ const Home = () => {
       }
     });
     chrome.tabs.onUpdated.addListener(function (_, __, tab) {
+      console.log("🚀 ~ tab:", tab)
       const url = tab.url;
       const domainName = extractDomainName(url ?? "");
+      console.log("🚀 ~ domainName:", domainName)
 
       chrome.storage.sync.get(["websites"], function (data) {
         const websites: WebsitesInterface[] = data.websites;
@@ -176,8 +178,8 @@ const Home = () => {
         if (
           !isExisting &&
           domainName !== "chrome://newtab/" &&
-          domainName !==
-            "chrome-extension://eodpboloehnpigcidckajkholkhcjjme/index"
+          !isChromeExtensionURL(domainName) &&
+          isValidURL(url ?? "")
         ) {
           document.title = "(1) Voice Command Chrome Assistant";
           setPendingCommand({
@@ -364,3 +366,4 @@ const Home = () => {
 };
 
 export default Home;
+
