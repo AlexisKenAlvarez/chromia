@@ -16,6 +16,8 @@ const Welcome = () => {
         setLoading(false);
       }
     });
+    // navigate("/home");
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -7,6 +7,12 @@ interface StorageCommand {
 }
 
 interface CommandStore {
+  pendingWebsites: {
+    name: string;
+    command: string[];
+    url: string;
+  }[];
+
   hidden: boolean;
   setHidden: (value: boolean) => void;
   mediaCommands: {
@@ -62,6 +68,10 @@ interface CommandStore {
     label: string;
   }) => void;
   active: boolean;
+  setPendingWebsites: (websites: CommandStore["pendingWebsites"][0]) => void;
+  removePendingWebsites: () => void;
+  ignoreList: string[];
+  setIgnoreList: () => void;
 }
 
 export const useCommandValues = create<CommandStore>()((set) => ({
@@ -69,6 +79,38 @@ export const useCommandValues = create<CommandStore>()((set) => ({
   hidden: false,
   setHidden: (value: boolean) => set(() => ({ hidden: value })),
 
+  ignoreList: [],
+  pendingWebsites: [],
+  setPendingWebsites: (websites: CommandStore["pendingWebsites"][0]) =>
+    set((state) => {
+      const exists = state.pendingWebsites.some(
+        (val) => val.name === websites.name
+      );
+
+      if (exists) {
+        return state;
+      }
+
+      const inIgnored = state.ignoreList.some((val) => val === websites.name);
+
+      if (inIgnored) {
+        return state;
+      }
+
+      return {
+        pendingWebsites: [...state.pendingWebsites, websites],
+      };
+    }),
+
+  removePendingWebsites: () =>
+    set(() => ({
+      pendingWebsites: [],
+    })),
+  setIgnoreList: () => {
+    set((state) => ({
+      ignoreList: [...state.pendingWebsites.map((site) => site.name)],
+    }));
+  },
   // Media Commands
   mediaCommands: [
     {
@@ -187,6 +229,35 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
+      command: ["scroll up"],
+      label: "Scroll up",
+      callback: () => {
+        handleScroll("up");
+      },
+    },
+    {
+      command: ["scroll down"],
+      label: "Scroll down",
+      callback: () => {
+        handleScroll("down");
+      },
+    },
+    {
+      command: ["refresh", "reload"],
+      label: "Reload Page",
+      callback: () => {
+        chrome.tabs.query(
+          { active: true, windowType: "normal" },
+          (arrayOfTabs) => {
+            if (arrayOfTabs.length > 0 && arrayOfTabs[0].id) {
+              chrome.tabs?.reload(arrayOfTabs[0].id, {});
+            }
+          }
+        );
+      },
+    },
+
+    {
       command: ["hide"],
       label: "Hide UI",
       callback: () => {
@@ -198,6 +269,35 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       label: "Show UI",
       callback: () => {
         handleUI("show");
+      },
+    },
+    {
+      command: ["open commands", "show"],
+      label: "Open Commands",
+      callback: () => {
+        try {
+          chrome.tabs.query({}, (tabs) => {
+            // Assuming you want to switch to the first tab found
+
+            tabs.forEach((tab) => {
+              if (
+                tab.title === "(1) Voice Command Chrome Assistant" ||
+                tab.title === "Voice Command Chrome Assistant"
+              ) {
+                const id = tab.id;
+
+                if (id) {
+                  chrome.tabs.update(id, { active: true });
+                  window.location.hash = "#/commands";
+                }
+              }
+            });
+
+            // Update the tab to make it active
+          });
+        } catch (error) {
+          console.log(error);
+        }
       },
     },
     {
@@ -275,7 +375,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
     label: "open",
     callback: (website: string) => {
       chrome.storage.sync.get(["websites"], function (data) {
-        data.websites.map((site: { url: string, command: string[] }) => {
+        data.websites.map((site: { url: string; command: string[] }) => {
           if (site.command.includes(website)) {
             chrome.tabs.create({ url: site.url });
           }
@@ -321,6 +421,22 @@ const handleUI = (type: "show" | "hide") => {
     useCommandValues.setState({ hidden: true });
   }
   console.log(type);
+};
+
+const handleScroll = async (type: string) => {
+  const [tab] = await chrome.tabs.query({ active: true });
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id! },
+    world: "MAIN",
+    func: (type: string) => {
+      if (type === "down") {
+        window.scrollBy(0, window.innerHeight);
+      } else {
+        window.scrollBy(0, -window.innerHeight);
+      }
+    },
+    args: [type],
+  });
 };
 
 const handlePlayback = async (type: "pause" | "play") => {

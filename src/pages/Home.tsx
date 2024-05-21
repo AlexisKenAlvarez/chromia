@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useCommandValues } from "@/store/commandsStore";
-import { AppWindow, CircleHelp, Info, Settings } from "lucide-react";
+import { List, CircleHelp, Info, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
@@ -20,6 +20,7 @@ import SpeechRecognition, {
 import "regenerator-runtime/runtime";
 import { cn, extractDomainName } from "../utils/utils";
 import { WEBSITES } from "@/lib/constants";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [previousWord, setPreviousWord] = useState("");
@@ -40,7 +41,12 @@ const Home = () => {
 
   const openCommand = useCommandValues((state) => state.openCommand);
   const searchCommand = useCommandValues((state) => state.searchCommand);
+  const pendingCommands = useCommandValues((state) => state.pendingWebsites);
+  const setPendingCommand = useCommandValues(
+    (state) => state.setPendingWebsites
+  );
 
+  const navigate = useNavigate();
   const [seekTime, setSeekTime] = useState<number>(5);
   const [listening, setListening] = useState(false);
   const [exist, setExist] = useState<null | boolean>(null);
@@ -64,7 +70,6 @@ const Home = () => {
       icon: CircleHelp,
     },
   ];
-
 
   const {
     transcript,
@@ -126,19 +131,20 @@ const Home = () => {
         chrome.storage.sync.set({ websites: WEBSITES }, () => {});
       }
     });
-
     chrome.tabs.query({}, function (tabs) {
       tabs.forEach((tab, index) => {
-        if (tab.title === "Voice Command Chrome Assistant") {
+        if (
+          tab.title === "Voice Command Chrome Assistant" ||
+          tab.title === "(1) Voice Command Chrome Assistant"
+        ) {
           setExist(true);
         }
-
         if (tabs.length === index + 1) {
           setIterated(true);
         }
       });
-
       if (exist === null && iterated) {
+        console.log("Mag create ng new tab");
         chrome.tabs.create({ url: "index.html" });
         // console.log("CREATE NEW TAB");
       }
@@ -151,7 +157,6 @@ const Home = () => {
         updateMediaCommands(data.mediaCommands as typeof mediaCommands);
       }
     });
-
     chrome.storage.sync.get("navigationCommands", function (data) {
       if (data.mediaCommands) {
         updateNavigationCommands(
@@ -159,31 +164,31 @@ const Home = () => {
         );
       }
     });
-
     chrome.tabs.onUpdated.addListener(function (_, __, tab) {
-      const domainName = extractDomainName(tab.url ?? "");
+      const url = tab.url;
+      const domainName = extractDomainName(url ?? "");
 
       chrome.storage.sync.get(["websites"], function (data) {
-        const websites: WebsitesInterface[] = data.websites
-
+        const websites: WebsitesInterface[] = data.websites;
         const isExisting = websites?.some(
           (website) => website.name.toLowerCase() === domainName
         );
-  
-        if (!isExisting) {
-  
-          console.log(websites);
-          console.log("This website does not exist yet ", domainName);
+        if (
+          !isExisting &&
+          domainName !== "chrome://newtab/" &&
+          domainName !==
+            "chrome-extension://eodpboloehnpigcidckajkholkhcjjme/index"
+        ) {
+          document.title = "(1) Voice Command Chrome Assistant";
+          setPendingCommand({
+            command: [domainName.toLowerCase()],
+            name: domainName,
+            url: url ?? "",
+          });
         } else {
           console.log("This website exists, ", domainName);
         }
       });
-     
-    });
-
-    chrome.tabs.onCreated.addListener(function (tab) {
-      console.log("🚀 ~ tab:", tab);
-      document.title = "New tab created";
     });
   }, []);
 
@@ -225,8 +230,8 @@ const Home = () => {
           className="mx-auto"
         >
           <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
+            fillRule="evenodd"
+            clipRule="evenodd"
             d="M3.42857 32.0976C5.3221 32.0976 6.85714 33.6373 6.85714 35.5366V40.122C6.85714 58.4822 21.6957 73.3659 40 73.3659C58.3045 73.3659 73.1429 58.4822 73.1429 40.122V35.5366C73.1429 33.6373 74.6779 32.0976 76.5714 32.0976C78.4649 32.0976 80 33.6373 80 35.5366V40.122C80 61.122 63.915 78.3543 43.4286 80.0985V90.561C43.4286 92.4602 41.8935 94 40 94C38.1065 94 36.5714 92.4602 36.5714 90.561V80.0985C16.085 78.3543 0 61.122 0 40.122V35.5366C0 33.6373 1.53504 32.0976 3.42857 32.0976Z"
             fill="#1C274C"
           />
@@ -333,13 +338,19 @@ const Home = () => {
         <Separator className="mb-3" />
         <button
           className="flex items-center gap-2 opacity-80 hover:opacity-100 text-sm"
-          onClick={() => chrome.tabs.create({ url: "index.html" })}
+          onClick={() => navigate("/weblist")}
         >
-          <AppWindow size={18} />
-          <p>Open in background</p>
+          <div className="w-fit h-fit relative">
+            {pendingCommands.length > 0 && (
+              <div className="w-2 h-2 rounded-full bg-blue-500 absolute -top-[1px] -right-[2px]"></div>
+            )}
+            <List size={18} />
+          </div>
+          <p>Accessible websites list</p>
         </button>
         {navigations.map((nav) => (
           <a
+            key={nav.label}
             href={`#/${nav.link}`}
             className="flex items-center gap-2 opacity-80 hover:opacity-100 text-sm"
           >
