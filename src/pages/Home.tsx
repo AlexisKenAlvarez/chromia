@@ -88,7 +88,7 @@ const Home = () => {
     const myTimeout = setTimeout(() => {
       setPreviousWord(transcript);
       resetTranscript();
-    }, 1200);
+    }, 1000);
 
     if (transcript !== "") {
       myTimeout;
