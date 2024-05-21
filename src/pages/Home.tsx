@@ -18,7 +18,12 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import "regenerator-runtime/runtime";
-import { cn, extractDomainName, isChromeExtensionURL, isValidURL } from "../utils/utils";
+import {
+  cn,
+  extractDomainName,
+  isChromeExtensionURL,
+  isValidURL,
+} from "../utils/utils";
 import { WEBSITES } from "@/lib/constants";
 import { useNavigate } from "react-router-dom";
 
@@ -51,6 +56,7 @@ const Home = () => {
   const [listening, setListening] = useState(false);
   const [exist, setExist] = useState<null | boolean>(null);
   const [iterated, setIterated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   interface WebsitesInterface {
     command: string[];
@@ -152,6 +158,12 @@ const Home = () => {
   }, [exist, iterated]);
 
   useEffect(() => {
+    chrome.storage.sync.get("seekTime", function (data) {
+      if (data.seekTime) {
+        setSeekTime(data.seekTime);
+      }
+    });
+
     chrome.storage.sync.get("mediaCommands", function (data) {
       if (data.mediaCommands) {
         updateMediaCommands(data.mediaCommands as typeof mediaCommands);
@@ -165,10 +177,9 @@ const Home = () => {
       }
     });
     chrome.tabs.onUpdated.addListener(function (_, __, tab) {
-      console.log("🚀 ~ tab:", tab)
+      console.log("🚀 ~ tab:", tab);
       const url = tab.url;
       const domainName = extractDomainName(url ?? "");
-      console.log("🚀 ~ domainName:", domainName)
 
       chrome.storage.sync.get(["websites"], function (data) {
         const websites: WebsitesInterface[] = data.websites;
@@ -192,6 +203,8 @@ const Home = () => {
         }
       });
     });
+
+    setLoading(false);
   }, []);
 
   if (!browserSupportsSpeechRecognition) {
@@ -212,6 +225,8 @@ const Home = () => {
       </div>
     );
   }
+
+  if (loading) return null;
 
   return (
     <div
@@ -311,10 +326,14 @@ const Home = () => {
         <div className="text-center">
           <Slider
             className="mt-5"
-            defaultValue={[5]}
+            defaultValue={[seekTime]}
+            value={[seekTime]}
             min={1}
             max={20}
-            onValueChange={(value) => setSeekTime(value[0])}
+            onValueChange={(value) => {
+              setSeekTime(value[0]);
+              chrome.storage.sync.set({ seekTime: value[0] }, () => {});
+            }}
           />
           <div className="flex items-center justify-center mt-2 gap-1">
             <TooltipProvider delayDuration={1}>
@@ -366,4 +385,3 @@ const Home = () => {
 };
 
 export default Home;
-
