@@ -1,9 +1,7 @@
 import { Separator } from "./ui/separator";
 import { ScanSearch, AppWindow } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const FixedCommands = () => {
-  const navigate = useNavigate();
   return (
     <ol className="space-y-4 mt-4">
       <li className="">
@@ -72,8 +70,8 @@ const FixedCommands = () => {
           <p className="">
             <span className="font-bold">2. </span>We currently support limited
             number of websites.{" "}
-            <span className="italic underline cursor-pointer" onClick={() => navigate("/weblist")}>
-              View website list
+            <span className="italic ">
+              Website list is on the right side of the screen.
             </span>
           </p>
         </div>

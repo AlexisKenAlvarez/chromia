@@ -26,7 +26,7 @@ const Welcome = () => {
   }
 
   return (
-    <Container className="text-center">
+    <Container className="text-center w-[450px] h-[500px] relative">
       <div className="flex flex-col items-start justify-between h-full">
         <div className="space-y-7 ">
           <h2 className="font-bold">Welcome, Howdy?</h2>

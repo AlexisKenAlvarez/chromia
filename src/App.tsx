@@ -3,24 +3,23 @@ import Commands from "./pages/Commands";
 import Home from "./pages/Home";
 import Welcome from "./pages/Welcome";
 import WebList from "./pages/WebList";
+import { Toaster } from "@/components/ui/sonner";
 
 const App = () => {
   return (
-    <div className="w-[450px] h-[500px] relative">
-      <div className="space-y-2 text-center">
-        <h1 className="font-bold text-lg py-2">
-          Voice Command Chrome Assistant
-        </h1>
-      </div>
+    <div className="relative flex flex-col min-h-screen">
+      <Toaster />
 
-      <HashRouter>
-        <Routes>
-          <Route path="/" element={<Welcome />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/commands" element={<Commands />} />
-          <Route path="/weblist" element={<WebList />} />
-        </Routes>
-      </HashRouter>
+      <div className="flex-1 flex w-full">
+        <HashRouter>
+          <Routes>
+            <Route path="/" element={<Welcome />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/commands" element={<Commands />} />
+            <Route path="/weblist" element={<WebList />} />
+          </Routes>
+        </HashRouter>
+      </div>
     </div>
   );
 };

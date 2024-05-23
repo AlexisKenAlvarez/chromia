@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { isChromeExtensionURL } from "@/utils/utils";
 import { create } from "zustand";
+import { toast } from "sonner";
 
 interface StorageCommand {
   command: string[];
@@ -114,7 +116,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
   // Media Commands
   mediaCommands: [
     {
-      command: ["pause", "tigil"],
+      command: ["pause", "tigil", "stop"],
       label: "pause",
       callback: () => {
         handlePlayback("pause");
@@ -135,7 +137,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
-      command: ["rewind",],
+      command: ["rewind"],
       label: "rewind",
       callback: () => {
         handleSeek("backward");
@@ -262,6 +264,20 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
+      command: ["stop listening"],
+      label: "Stop listening",
+      callback: () => {
+        set(() => ({ active: false }));
+      },
+    },
+    {
+      command: ["start listening"],
+      label: "Start listening (After being stopped with command)",
+      callback: () => {
+        set(() => ({ active: true }));
+      },
+    },
+    {
       command: ["refresh", "reload"],
       label: "Reload Page",
       callback: () => {
@@ -292,7 +308,6 @@ export const useCommandValues = create<CommandStore>()((set) => ({
 
                 if (id) {
                   chrome.tabs.update(id, { active: true });
-                  window.location.hash = "#/commands";
                 }
               }
             });
@@ -312,7 +327,14 @@ export const useCommandValues = create<CommandStore>()((set) => ({
           chrome.tabs.query(
             { currentWindow: true, active: true },
             function (tabs) {
-              chrome.tabs.remove(tabs[0].id!, function () {});
+              const url = tabs[0].url;
+              toast;
+              if (isChromeExtensionURL(url ?? "")) {
+                console.log("This is a chrome URL");
+                toast("You cannot close this tab with voice command.");
+              } else {
+                chrome.tabs.remove(tabs[0].id!, function () {});
+              }
             }
           );
         } catch (error) {

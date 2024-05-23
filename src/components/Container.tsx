@@ -11,11 +11,11 @@ const Container = ({
   return (
     <div
       className={cn(
-        "w-[450px] h-[500px] py-2 opacity-100 max-h-full overflow-hidden border flex items-center justify-center flex-col relative",
+        "opacity-100 max-h-full overflow-hidden border relative",
         className
       )}
     >
-      <div className="overflow-y-scroll h-[90%] w-full px-5 no-scroll">{children}</div>
+      <div className="overflow-y-scroll w-full px-5 no-scroll py-3">{children}</div>
     </div>
   );
 };

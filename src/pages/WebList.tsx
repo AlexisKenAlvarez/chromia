@@ -2,9 +2,7 @@ import Container from "@/components/Container";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCommandValues } from "@/store/commandsStore";
-import { ArrowBigLeftDash } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 interface Commands {
   name: string;
@@ -14,8 +12,7 @@ interface Commands {
 [];
 
 const WebList = () => {
-  const [websites, setWebsites] = useState<Commands[]>();
-  const navigate = useNavigate();
+  const [websites, setWebsites] = useState<Commands[]>([]);
 
   const pendingCommands = useCommandValues((state) => state.pendingWebsites);
   const ignorePending = useCommandValues((state) => state.setIgnoreList);
@@ -29,7 +26,7 @@ const WebList = () => {
   }, []);
 
   return (
-    <Container className="">
+    <Container className="w-full relative">
       {pendingCommands.length > 0 && (
         <div className="w-full bg-white h-full z-10 absolute top-0 left-0 p-10 space-y-3">
           <h1 className="text-lg font-medium">New websites detected</h1>
@@ -57,9 +54,12 @@ const WebList = () => {
                     () => {
                       document.title = "Voice Command Chrome Assistant";
                       removePending();
-                      navigate("/home");
                     }
                   );
+
+                  setWebsites((prev) => {
+                    return [...prev, ...pendingCommands];
+                  })
                 });
               }}
             >
@@ -73,7 +73,6 @@ const WebList = () => {
 
                 ignorePending();
                 removePending();
-                navigate("/home");
               }}
             >
               Ignore
@@ -83,14 +82,6 @@ const WebList = () => {
       )}
 
       <div className="flex items-center gap-2 sticky top-0 bg-white pb-2">
-        <Button
-          variant="secondary"
-          onClick={() => navigate("/home")}
-          className="flex items-center gap-2 mr-2"
-        >
-          <ArrowBigLeftDash size={28} strokeWidth={1} />
-          <p className="">Back</p>
-        </Button>
         <h1 className="font-bold">Website List</h1>
       </div>
 
