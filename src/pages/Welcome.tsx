@@ -1,22 +1,22 @@
 import { Button } from "@/components/ui/button";
 import Container from "../components/Container";
 // import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Welcome = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // chrome.storage.sync.get(["onBoarded"], (result) => {
-    //   if (result.onBoarded) {
-    //     navigate("/home");
-    //   } else {
-    //     setLoading(false);
-    //   }
-    // });
-    navigate("/home");
+    chrome.storage.sync.get(["onBoarded"], (result) => {
+      if (result.onBoarded) {
+        navigate("/home");
+      } else {
+        setLoading(false);
+      }
+    });
+    // navigate("/home");
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

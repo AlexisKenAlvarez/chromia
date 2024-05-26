@@ -37,7 +37,6 @@ interface CommandStore {
     label: string;
     callback: (term: string) => void;
   };
-
   setMediaCommands: ({
     command,
     label,
@@ -74,6 +73,18 @@ interface CommandStore {
   removePendingWebsites: () => void;
   ignoreList: string[];
   setIgnoreList: () => void;
+  defaultMediaCommands: {
+    command: string[];
+    label: string;
+    callback: () => void;
+  }[];
+  defaultNavigationCommands: {
+    command: string[];
+    label: string;
+    callback: () => void;
+  }[];
+  setMediaDefault: () => void;
+  setNavigationDefault: () => void;
 }
 
 export const useCommandValues = create<CommandStore>()((set) => ({
@@ -272,7 +283,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
     },
     {
       command: ["start listening"],
-      label: "Start listening (After being stopped with command)",
+      label: "Start listening",
       callback: () => {
         set(() => ({ active: true }));
       },
@@ -292,7 +303,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
-      command: ["open commands", "show"],
+      command: ["open commands"],
       label: "Open Commands",
       callback: () => {
         try {
@@ -423,8 +434,10 @@ export const useCommandValues = create<CommandStore>()((set) => ({
                 chrome.tabs.create({
                   url: `${url}/results?search_query=${term}`,
                 });
-              } else if (url === "https://www.facebook.com" || url === "https://web.facebook.com") {
-                
+              } else if (
+                url === "https://www.facebook.com" ||
+                url === "https://web.facebook.com"
+              ) {
                 chrome.tabs.create({ url: `${url}/search/top?q=${term}` });
               } else {
                 chrome.tabs.create({
@@ -432,7 +445,6 @@ export const useCommandValues = create<CommandStore>()((set) => ({
                 });
               }
             }
-           
           }
         );
       } catch (error) {
@@ -441,6 +453,198 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       }
     },
   },
+
+  defaultMediaCommands: [
+    {
+      command: ["pause", "tigil", "stop"],
+      label: "pause",
+      callback: () => {
+        handlePlayback("pause");
+      },
+    },
+    {
+      command: ["play", "tuloy", "start"],
+      label: "play",
+      callback: () => {
+        handlePlayback("play");
+      },
+    },
+    {
+      command: ["skip", "forward"],
+      label: "skip",
+      callback: () => {
+        handleSeek("forward");
+      },
+    },
+    {
+      command: ["rewind"],
+      label: "rewind",
+      callback: () => {
+        handleSeek("backward");
+      },
+    },
+    {
+      command: ["next"],
+      label: "Next Video",
+      callback: () => {
+        handleNext();
+      },
+    },
+    {
+      command: ["fullscreen", "full screen"],
+      label: "fullscreen",
+      callback: () => {
+        handleFullScreen("full");
+      },
+    },
+    {
+      command: ["exit"],
+      label: "Exit fullscreen",
+      callback: () => {
+        handleFullScreen("exit");
+      },
+    },
+  ],
+
+  defaultNavigationCommands: [
+    {
+      command: ["next slide"],
+      label: "Next slide",
+      callback: () => {
+        handlePage("next");
+      },
+    },
+    {
+      command: ["previous slide"],
+      label: "Previous slide",
+      callback: () => {
+        handlePage("back");
+      },
+    },
+    {
+      command: ["back"],
+      label: "Go back",
+      callback: async () => {
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+
+        if (tab && tab.id) {
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+              window.history.back();
+            },
+          });
+        }
+      },
+    },
+    {
+      command: ["scroll up"],
+      label: "Scroll up",
+      callback: () => {
+        handleScroll("up");
+      },
+    },
+    {
+      command: ["scroll down"],
+      label: "Scroll down",
+      callback: () => {
+        handleScroll("down");
+      },
+    },
+    {
+      command: ["stop listening"],
+      label: "Stop listening",
+      callback: () => {
+        set(() => ({ active: false }));
+      },
+    },
+    {
+      command: ["start listening"],
+      label: "Start listening",
+      callback: () => {
+        set(() => ({ active: true }));
+      },
+    },
+    {
+      command: ["refresh", "reload"],
+      label: "Reload Page",
+      callback: () => {
+        chrome.tabs.query(
+          { active: true, windowType: "normal" },
+          (arrayOfTabs) => {
+            if (arrayOfTabs.length > 0 && arrayOfTabs[0].id) {
+              chrome.tabs?.reload(arrayOfTabs[0].id, {});
+            }
+          }
+        );
+      },
+    },
+    {
+      command: ["open commands"],
+      label: "Open Commands",
+      callback: () => {
+        try {
+          chrome.tabs.query({}, (tabs) => {
+            // Assuming you want to switch to the first tab found
+
+            tabs.forEach((tab) => {
+              if (
+                tab.title === "(1) Voice Command Chrome Assistant" ||
+                tab.title === "Voice Command Chrome Assistant"
+              ) {
+                const id = tab.id;
+
+                if (id) {
+                  chrome.tabs.update(id, { active: true });
+                }
+              }
+            });
+
+            // Update the tab to make it active
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      },
+    },
+    {
+      command: ["close tab"],
+      label: "Close tab",
+      callback: () => {
+        try {
+          chrome.tabs.query(
+            { currentWindow: true, active: true },
+            function (tabs) {
+              const url = tabs[0].url;
+              toast;
+              if (isChromeExtensionURL(url ?? "")) {
+                console.log("This is a chrome URL");
+                toast("You cannot close this tab with voice command.");
+              } else {
+                chrome.tabs.remove(tabs[0].id!, function () {});
+              }
+            }
+          );
+        } catch (error) {
+          console.log(error);
+          console.log("No tab to close");
+        }
+      },
+    },
+  ],
+
+  setMediaDefault: () =>
+    set((state) => ({
+      mediaCommands: state.defaultMediaCommands,
+    })),
+
+  setNavigationDefault: () =>
+    set((state) => ({
+      navigationCommands: state.defaultNavigationCommands,
+    })),
 }));
 
 const handleScroll = async (type: string) => {
@@ -468,7 +672,7 @@ const handlePlayback = async (type: "pause" | "play") => {
       const videoElem = document.querySelector("video");
 
       if (videoElem && videoElem instanceof HTMLVideoElement) {
-        if (videoElem.paused && type === "pause") {
+        if (type === "pause") {
           videoElem.pause();
         } else {
           videoElem.play();

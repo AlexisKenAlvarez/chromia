@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { WEBSITES } from "@/lib/constants";
 import { useCommandValues } from "@/store/commandsStore";
 import { Info } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -23,14 +24,12 @@ import {
   isChromeExtensionURL,
   isValidURL,
 } from "../utils/utils";
-import { WEBSITES } from "@/lib/constants";
-import WebList from "./WebList";
 import Commands from "./Commands";
+import WebList from "./WebList";
 
 const Home = () => {
   const [previousWord, setPreviousWord] = useState("");
   const active = useCommandValues((state) => state.active);
-  console.log("🚀 ~ Home ~ active:", active);
   const hidden = useCommandValues((state) => state.hidden);
   const mediaCommands = useCommandValues((state) => state.mediaCommands);
   const updateNavigationCommands = useCommandValues(
@@ -85,50 +84,48 @@ const Home = () => {
 
         if (active) setPreviousWord(transcript);
         resetTranscript();
-      }, 500);
+      }, 850);
     }
 
     if (active) {
       mediaCommands.forEach((command) => {
         if (command.command.includes(transcript)) {
           command.callback();
-          setPreviousWord("")
+          setPreviousWord("");
         }
       });
 
       navigationCommands.forEach((command) => {
         if (command.command.includes(transcript)) {
           command.callback();
-          setPreviousWord("")
+          setPreviousWord("");
         }
       });
 
       if (openCommand.command.includes(previousWord.split(" ")[0])) {
         const word = previousWord.split(" ");
         openCommand.callback(word[word.length - 1]);
-        setPreviousWord("")
+        setPreviousWord("");
       }
 
       if (searchCommand.command.includes(previousWord.split(" ")[0])) {
         const word = previousWord.split(" ").slice(1).join(" ");
         searchCommand.callback(word);
-        setPreviousWord("")
+        setPreviousWord("");
       }
     } else {
       const reactivate = navigationCommands.filter(
-        (command) =>
-          command.label === "Start listening (After being stopped with command)"
+        (command) => command.label === "Start listening"
       );
 
       if (reactivate[0].command.includes(transcript)) {
         console.log("Listening now!");
         setListening(true);
         useCommandValues.setState({ active: true });
-        setPreviousWord("")
+        setPreviousWord("");
       }
     }
 
-    
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -137,80 +134,122 @@ const Home = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript]);
 
-  // useEffect(() => {
-  //   chrome.storage.sync.get(["websites"], function (data) {
-  //     if (!data.websites) {
-  //       chrome.storage.sync.set({ websites: WEBSITES }, () => {});
-  //     }
-  //   });
-  //   chrome.tabs.query({}, function (tabs) {
-  //     tabs.forEach((tab, index) => {
-  //       if (
-  //         tab.title === "Voice Command Chrome Assistant" ||
-  //         tab.title === "(1) Voice Command Chrome Assistant"
-  //       ) {
-  //         setExist(true);
-  //       }
-  //       if (tabs.length === index + 1) {
-  //         setIterated(true);
-  //       }
-  //     });
-  //     if (exist === null && iterated) {
-  //       console.log("Mag create ng new tab");
-  //       chrome.tabs.create({ url: "index.html" });
-  //       // console.log("CREATE NEW TAB");
-  //     }
-  //   });
-  // }, [exist, iterated]);
+  useEffect(() => {
+    chrome.storage.sync.get(["websites"], function (data) {
+      if (!data.websites) {
+        chrome.storage.sync.set({ websites: WEBSITES }, () => {});
+      }
+    });
+    chrome.tabs.query({}, function (tabs) {
+      tabs.forEach((tab, index) => {
+        if (
+          tab.title === "Voice Command Chrome Assistant" ||
+          tab.title === "(1) Voice Command Chrome Assistant"
+        ) {
+          setExist(true);
+        }
+        if (tabs.length === index + 1) {
+          setIterated(true);
+        }
+      });
+      if (exist === null && iterated) {
+        console.log("Mag create ng new tab");
+        chrome.tabs.create({ url: "index.html" });
+        // console.log("CREATE NEW TAB");
+      } else {
+        chrome.tabs.query({}, (tabs) => {
+          // Assuming you want to switch to the first tab found
 
-  // useEffect(() => {
-  //   chrome.storage.sync.get("seekTime", function (data) {
-  //     if (data.seekTime) {
-  //       setSeekTime(data.seekTime);
-  //     }
-  //   });
+          tabs.forEach((tab) => {
+            if (
+              tab.title === "(1) Voice Command Chrome Assistant" ||
+              tab.title === "Voice Command Chrome Assistant"
+            ) {
+              const id = tab.id;
 
-  //   chrome.storage.sync.get("mediaCommands", function (data) {
-  //     if (data.mediaCommands) {
-  //       updateMediaCommands(data.mediaCommands as typeof mediaCommands);
-  //     }
-  //   });
-  //   chrome.storage.sync.get("navigationCommands", function (data) {
-  //     if (data.navigationCommands) {
-  //       updateNavigationCommands(
-  //         data.navigationCommands as typeof navigationCommands
-  //       );
-  //     }
-  //   });
-  //   chrome.tabs.onUpdated.addListener(function (_, __, tab) {
-  //     const url = tab.url;
-  //     const domainName = extractDomainName(url ?? "");
+              if (id) {
+                chrome.tabs.update(id, { active: true });
+              }
+            }
+          });
+        });
+      }
+    });
+  }, [exist, iterated]);
 
-  //     chrome.storage.sync.get(["websites"], function (data) {
-  //       const websites: WebsitesInterface[] = data.websites;
-  //       const isExisting = websites?.some(
-  //         (website) => website.name.toLowerCase() === domainName
-  //       );
-  //       if (
-  //         !isExisting &&
-  //         domainName !== "chrome://newtab/" &&
-  //         !isChromeExtensionURL(domainName) &&
-  //         isValidURL(url ?? "")
-  //       ) {
-  //         document.title = "(1) Voice Command Chrome Assistant";
-  //         setPendingCommand({
-  //           command: [domainName.toLowerCase()],
-  //           name: domainName,
-  //           url: url ?? "",
-  //         });
-  //       } else {
-  //         console.log("This website exists, ", domainName);
-  //       }
-  //     });
-  //   });
+  useEffect(() => {
+    void (async () => {
+      if (listening) {
+        useCommandValues.setState({ active: false });
 
-  //   setLoading(false);
-  // }, []);
+        setListening(false);
+        SpeechRecognition.abortListening();
+      } else {
+        await navigator.mediaDevices
+          .getUserMedia({ audio: true, video: false })
+          .then(function () {
+            setListening(true);
+            useCommandValues.setState({ active: true });
+            SpeechRecognition.startListening({ continuous: true });
+          })
+          .catch(function (error) {
+            window.chrome.tabs.create({
+              url: "request-mic.html",
+            });
+            console.log(error);
+          });
+      }
+    })();
+
+    chrome.storage.sync.get("seekTime", function (data) {
+      if (data.seekTime) {
+        setSeekTime(data.seekTime);
+      }
+    });
+
+    chrome.storage.sync.get("mediaCommands", function (data) {
+      if (data.mediaCommands) {
+        updateMediaCommands(data.mediaCommands as typeof mediaCommands);
+      }
+    });
+    chrome.storage.sync.get("navigationCommands", function (data) {
+      if (data.navigationCommands) {
+        updateNavigationCommands(
+          data.navigationCommands as typeof navigationCommands
+        );
+      }
+    });
+
+    const BLACKLIST = ["chrome://newtab/", "web"];
+    chrome.tabs.onUpdated.addListener(function (_, __, tab) {
+      const url = tab.url;
+      const domainName = extractDomainName(url ?? "");
+
+      chrome.storage.sync.get(["websites"], function (data) {
+        const websites: WebsitesInterface[] = data.websites;
+        const isExisting = websites?.some(
+          (website) => website.name.toLowerCase() === domainName
+        );
+        if (
+          !isExisting &&
+          !BLACKLIST.includes(domainName) &&
+          !isChromeExtensionURL(domainName) &&
+          isValidURL(url ?? "")
+        ) {
+          document.title = "(1) Voice Command Chrome Assistant";
+          setPendingCommand({
+            command: [domainName.toLowerCase()],
+            name: domainName,
+            url: url ?? "",
+          });
+        } else {
+          console.log("This website exists, ", domainName);
+        }
+      });
+    });
+
+    setLoading(false);
+  }, []);
 
   if (!browserSupportsSpeechRecognition) {
     return (
@@ -231,10 +270,14 @@ const Home = () => {
     );
   }
 
-  // if (loading) return null;
+  if (loading) return null;
 
   return (
-    <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col">
+    <div
+      className={cn(
+        "w-full max-w-screen-xl mx-auto min-h-screen flex-col md:flex hidden"
+      )}
+    >
       <div className="space-y-2 text-center">
         <h1 className="font-bold text-lg py-2">
           Voice Command Chrome Assistant
