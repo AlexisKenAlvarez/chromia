@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useCommandValues } from "@/store/commandsStore";
 import { Info } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -30,6 +30,7 @@ import Commands from "./Commands";
 const Home = () => {
   const [previousWord, setPreviousWord] = useState("");
   const active = useCommandValues((state) => state.active);
+  console.log("🚀 ~ Home ~ active:", active);
   const hidden = useCommandValues((state) => state.hidden);
   const mediaCommands = useCommandValues((state) => state.mediaCommands);
   const updateNavigationCommands = useCommandValues(
@@ -69,131 +70,147 @@ const Home = () => {
     resetTranscript,
   } = useSpeechRecognition();
 
-  useEffect(() => {
-    const myTimeout = setTimeout(() => {
-      setPreviousWord(transcript);
-      resetTranscript();
-    }, 1000);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  useEffect(() => {
     if (transcript !== "") {
-      myTimeout;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Set a new timeout
+      timeoutRef.current = setTimeout(() => {
+        console.log("Word: ", transcript);
+        console.log("Previous word: ", previousWord);
+
+        if (active) setPreviousWord(transcript);
+        resetTranscript();
+      }, 500);
     }
 
     if (active) {
       mediaCommands.forEach((command) => {
         if (command.command.includes(transcript)) {
           command.callback();
+          setPreviousWord("")
         }
       });
 
       navigationCommands.forEach((command) => {
         if (command.command.includes(transcript)) {
           command.callback();
+          setPreviousWord("")
         }
       });
 
       if (openCommand.command.includes(previousWord.split(" ")[0])) {
         const word = previousWord.split(" ");
-
         openCommand.callback(word[word.length - 1]);
+        setPreviousWord("")
       }
 
       if (searchCommand.command.includes(previousWord.split(" ")[0])) {
         const word = previousWord.split(" ").slice(1).join(" ");
         searchCommand.callback(word);
+        setPreviousWord("")
       }
     } else {
-      const reactivate = navigationCommands.filter((command) => command.label === "Start listening (After being stopped with command)") 
+      const reactivate = navigationCommands.filter(
+        (command) =>
+          command.label === "Start listening (After being stopped with command)"
+      );
 
-        if (reactivate[0].command.includes(transcript)) {
-          setListening(true);
-          useCommandValues.setState({ active: true });
-        }
+      if (reactivate[0].command.includes(transcript)) {
+        console.log("Listening now!");
+        setListening(true);
+        useCommandValues.setState({ active: true });
+        setPreviousWord("")
       }
-    
+    }
 
+    
     return () => {
-      clearTimeout(myTimeout);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript]);
-  
 
-  useEffect(() => {
-    chrome.storage.sync.get(["websites"], function (data) {
-      if (!data.websites) {
-        chrome.storage.sync.set({ websites: WEBSITES }, () => {});
-      }
-    });
-    chrome.tabs.query({}, function (tabs) {
-      tabs.forEach((tab, index) => {
-        if (
-          tab.title === "Voice Command Chrome Assistant" ||
-          tab.title === "(1) Voice Command Chrome Assistant"
-        ) {
-          setExist(true);
-        }
-        if (tabs.length === index + 1) {
-          setIterated(true);
-        }
-      });
-      if (exist === null && iterated) {
-        console.log("Mag create ng new tab");
-        chrome.tabs.create({ url: "index.html" });
-        // console.log("CREATE NEW TAB");
-      }
-    });
-  }, [exist, iterated]);
+  // useEffect(() => {
+  //   chrome.storage.sync.get(["websites"], function (data) {
+  //     if (!data.websites) {
+  //       chrome.storage.sync.set({ websites: WEBSITES }, () => {});
+  //     }
+  //   });
+  //   chrome.tabs.query({}, function (tabs) {
+  //     tabs.forEach((tab, index) => {
+  //       if (
+  //         tab.title === "Voice Command Chrome Assistant" ||
+  //         tab.title === "(1) Voice Command Chrome Assistant"
+  //       ) {
+  //         setExist(true);
+  //       }
+  //       if (tabs.length === index + 1) {
+  //         setIterated(true);
+  //       }
+  //     });
+  //     if (exist === null && iterated) {
+  //       console.log("Mag create ng new tab");
+  //       chrome.tabs.create({ url: "index.html" });
+  //       // console.log("CREATE NEW TAB");
+  //     }
+  //   });
+  // }, [exist, iterated]);
 
-  useEffect(() => {
-    chrome.storage.sync.get("seekTime", function (data) {
-      if (data.seekTime) {
-        setSeekTime(data.seekTime);
-      }
-    });
+  // useEffect(() => {
+  //   chrome.storage.sync.get("seekTime", function (data) {
+  //     if (data.seekTime) {
+  //       setSeekTime(data.seekTime);
+  //     }
+  //   });
 
-    chrome.storage.sync.get("mediaCommands", function (data) {
-      if (data.mediaCommands) {
-        updateMediaCommands(data.mediaCommands as typeof mediaCommands);
-      }
-    });
-    chrome.storage.sync.get("navigationCommands", function (data) {
-      if (data.mediaCommands) {
-        updateNavigationCommands(
-          data.navigationCommands as typeof navigationCommands
-        );
-      }
-    });
-    chrome.tabs.onUpdated.addListener(function (_, __, tab) {
-      console.log("🚀 ~ tab:", tab);
-      const url = tab.url;
-      const domainName = extractDomainName(url ?? "");
+  //   chrome.storage.sync.get("mediaCommands", function (data) {
+  //     if (data.mediaCommands) {
+  //       updateMediaCommands(data.mediaCommands as typeof mediaCommands);
+  //     }
+  //   });
+  //   chrome.storage.sync.get("navigationCommands", function (data) {
+  //     if (data.navigationCommands) {
+  //       updateNavigationCommands(
+  //         data.navigationCommands as typeof navigationCommands
+  //       );
+  //     }
+  //   });
+  //   chrome.tabs.onUpdated.addListener(function (_, __, tab) {
+  //     const url = tab.url;
+  //     const domainName = extractDomainName(url ?? "");
 
-      chrome.storage.sync.get(["websites"], function (data) {
-        const websites: WebsitesInterface[] = data.websites;
-        const isExisting = websites?.some(
-          (website) => website.name.toLowerCase() === domainName
-        );
-        if (
-          !isExisting &&
-          domainName !== "chrome://newtab/" &&
-          !isChromeExtensionURL(domainName) &&
-          isValidURL(url ?? "")
-        ) {
-          document.title = "(1) Voice Command Chrome Assistant";
-          setPendingCommand({
-            command: [domainName.toLowerCase()],
-            name: domainName,
-            url: url ?? "",
-          });
-        } else {
-          console.log("This website exists, ", domainName);
-        }
-      });
-    });
+  //     chrome.storage.sync.get(["websites"], function (data) {
+  //       const websites: WebsitesInterface[] = data.websites;
+  //       const isExisting = websites?.some(
+  //         (website) => website.name.toLowerCase() === domainName
+  //       );
+  //       if (
+  //         !isExisting &&
+  //         domainName !== "chrome://newtab/" &&
+  //         !isChromeExtensionURL(domainName) &&
+  //         isValidURL(url ?? "")
+  //       ) {
+  //         document.title = "(1) Voice Command Chrome Assistant";
+  //         setPendingCommand({
+  //           command: [domainName.toLowerCase()],
+  //           name: domainName,
+  //           url: url ?? "",
+  //         });
+  //       } else {
+  //         console.log("This website exists, ", domainName);
+  //       }
+  //     });
+  //   });
 
-    setLoading(false);
-  }, []);
+  //   setLoading(false);
+  // }, []);
 
   if (!browserSupportsSpeechRecognition) {
     return (
@@ -214,7 +231,7 @@ const Home = () => {
     );
   }
 
-  if (loading) return null;
+  // if (loading) return null;
 
   return (
     <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col">
@@ -275,7 +292,7 @@ const Home = () => {
               className={cn(
                 "w-28 h-14 rounded-full relative mx-auto bg-slate-300 grid place-content-center",
                 {
-                  "bg-green-400": listening || active,
+                  "bg-green-400": active,
                 }
               )}
             >
@@ -284,7 +301,7 @@ const Home = () => {
                   "w-full h-full rounded-full absolute top-0 left-0 mx-auto bg-slate-300",
                   {
                     "animate-ping": transcript !== "",
-                    "bg-green-400": listening || active,
+                    "bg-green-400": active,
                   }
                 )}
               ></div>

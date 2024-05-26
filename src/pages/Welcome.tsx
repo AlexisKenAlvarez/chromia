@@ -9,14 +9,14 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    chrome.storage.sync.get(["onBoarded"], (result) => {
-      if (result.onBoarded) {
-        navigate("/home");
-      } else {
-        setLoading(false);
-      }
-    });
-    // navigate("/home");
+    // chrome.storage.sync.get(["onBoarded"], (result) => {
+    //   if (result.onBoarded) {
+    //     navigate("/home");
+    //   } else {
+    //     setLoading(false);
+    //   }
+    // });
+    navigate("/home");
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -80,7 +80,7 @@ const Welcome = () => {
         </div>
 
         <Button
-          className="w-full"
+          className="w-full mt-5"
           onClick={() => {
             chrome.storage.sync.set({ onBoarded: true }, () => {});
             navigate("/home");

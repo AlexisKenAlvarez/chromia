@@ -19,11 +19,11 @@ const WebList = () => {
   const removePending = useCommandValues(
     (state) => state.removePendingWebsites
   );
-  useEffect(() => {
-    chrome.storage.sync.get(["websites"], (result) => {
-      setWebsites(result.websites);
-    });
-  }, []);
+  // useEffect(() => {
+  //   chrome.storage.sync.get(["websites"], (result) => {
+  //     setWebsites(result.websites);
+  //   });
+  // }, []);
 
   return (
     <Container className="w-full relative">

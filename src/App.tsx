@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 const App = () => {
   return (
-    <div className="relative flex flex-col min-h-screen">
+    <div className="relative flex flex-col min-h-screen w-full min-w-[450px]">
       <Toaster />
 
       <div className="flex-1 flex w-full">

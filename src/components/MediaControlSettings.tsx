@@ -18,8 +18,9 @@ import {
 import { useCommandValues } from "@/store/commandsStore";
 import { AnimatePresence, motion } from "framer-motion";
 import { CircleX } from "lucide-react";
+import { cn } from "@/utils/utils";
 
-const MediaControlSettings = () => {
+const MediaControlSettings = ({editing}: {editing: boolean}) => {
   const mediaCommands = useCommandValues((state) => state.mediaCommands);
   const [addingTo, setAddingTo] = useState("");
 
@@ -76,7 +77,7 @@ const MediaControlSettings = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {mediaCommands.map((item, index) => (
         <div className="" key={index}>
           <h1 className="capitalize font-medium">{item.label}</h1>
@@ -84,7 +85,9 @@ const MediaControlSettings = () => {
             {item.command.map((cmd) => (
               <li className="relative group" key={cmd}>
                 <button
-                  className="absolute -right-1 -top-1 group-hover:opacity-100 opacity-0"
+                  className={cn("hidden absolute -right-1 -top-1 opacity-0", {
+                    "opacity-100 block": editing,
+                  })}
                   onClick={() => {
                     chrome.storage.sync.set(
                       {
@@ -115,7 +118,7 @@ const MediaControlSettings = () => {
                   <CircleX size={18} color="red" fill="red" stroke="white" />
                 </button>
                 <Badge
-                  className="flex h-full items-center px-4 rounded-md"
+                  className="flex h-full items-center px-4 py-[9px] rounded-md"
                   variant="outline"
                 >
                   <p className="">{cmd}</p>
@@ -123,7 +126,9 @@ const MediaControlSettings = () => {
               </li>
             ))}
             <Button
-              className="w-fit h-fit py-2"
+              className={cn("w-fit h-fit py-2 hidden ml-2", {
+                "block": editing,
+              })}
               onClick={() => setAddingTo(item.label)}
             >
               +

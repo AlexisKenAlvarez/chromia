@@ -418,18 +418,21 @@ export const useCommandValues = create<CommandStore>()((set) => ({
           { currentWindow: true, active: true },
           function (tabs) {
             const url = new URL(tabs[0].url!).origin;
-
-            if (url === "https://www.youtube.com") {
-              chrome.tabs.create({
-                url: `${url}/results?search_query=${term}`,
-              });
-            } else if (url === "https://www.facebook.com") {
-              chrome.tabs.create({ url: `${url}/search/top?q=${term}` });
-            } else {
-              chrome.tabs.create({
-                url: `https://www.google.com/search?q=${term}`,
-              });
+            if (term && term !== "") {
+              if (url === "https://www.youtube.com") {
+                chrome.tabs.create({
+                  url: `${url}/results?search_query=${term}`,
+                });
+              } else if (url === "https://www.facebook.com" || url === "https://web.facebook.com") {
+                
+                chrome.tabs.create({ url: `${url}/search/top?q=${term}` });
+              } else {
+                chrome.tabs.create({
+                  url: `https://www.google.com/search?q=${term}`,
+                });
+              }
             }
+           
           }
         );
       } catch (error) {
@@ -465,7 +468,7 @@ const handlePlayback = async (type: "pause" | "play") => {
       const videoElem = document.querySelector("video");
 
       if (videoElem && videoElem instanceof HTMLVideoElement) {
-        if (!videoElem.paused && type === "pause") {
+        if (videoElem.paused && type === "pause") {
           videoElem.pause();
         } else {
           videoElem.play();
@@ -478,7 +481,6 @@ const handlePlayback = async (type: "pause" | "play") => {
 
 const handleFullScreen = async (type: string) => {
   const [tab] = await chrome.tabs.query({ active: true });
-  console.log("🚀 ~ handleFullScreen ~ tab:", tab);
 
   chrome.scripting.executeScript({
     target: { tabId: tab.id! },

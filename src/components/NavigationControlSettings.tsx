@@ -19,7 +19,7 @@ import { useCommandValues } from "@/store/commandsStore";
 import { AnimatePresence, motion } from "framer-motion";
 import { CircleX } from "lucide-react";
 
-const NavigationControlSettings = () => {
+const NavigationControlSettings = ({editing}: {editing: boolean}) => {
   const navigationCommands = useCommandValues(
     (state) => state.navigationCommands
   );
