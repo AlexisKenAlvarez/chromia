@@ -103,10 +103,7 @@ const WebList = () => {
           />
           <Label htmlFor="auto-mode">Auto add websites</Label>
         </div> */}
-        <p className="text-sm opacity-70">
-          When this is checked, it will automatically add websites you visit to
-          the list below without asking for confirmation.
-        </p>
+
         <Separator />
       </div>
 

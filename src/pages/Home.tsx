@@ -379,7 +379,7 @@ const Home = () => {
                 }
               }}
             >
-              {listening ? "Stop Listening" : "Start Listening"}
+              {active ? "Stop Listening" : "Start Listening"}
             </Button>
             <div className="text-center">
               <Slider
