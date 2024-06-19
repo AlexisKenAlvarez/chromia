@@ -38,6 +38,11 @@ const NavigationControlSettings = () => {
   const navigationCommands = useCommandValues(
     (state) => state.navigationCommands
   );
+
+  const mediaCommands = useCommandValues(
+    (state) => state.mediaCommands
+  );
+
   const [addingTo, setAddingTo] = useState("");
 
   const setNavigationCommands = useCommandValues(
@@ -66,6 +71,19 @@ const NavigationControlSettings = () => {
   });
 
   function onSubmit(values: commandType) {
+
+    const existing1 = mediaCommands.map((item) => item.command).flat().find((item) => item === values.command)
+    const existing2 = navigationCommands.map((item) => item.command).flat().find((item) => item === values.command)
+    const existing3 = values.command === "search" || values.command === "open" || values.command === "go to"
+
+    if (existing1 || existing2 || existing3) {
+      form.setError("command", {
+        type: "manual",
+        message: "Command already exists",
+      });
+      return;
+    }
+
     setNavigationCommands({ command: values.command, label: addingTo });
 
     chrome.storage.sync.set(

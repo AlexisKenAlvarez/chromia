@@ -178,6 +178,8 @@ const Home = () => {
   }, [exist, iterated]);
 
   useEffect(() => {
+
+
     void (async () => {
       if (listening) {
         useCommandValues.setState({ active: false });
@@ -275,7 +277,7 @@ const Home = () => {
   return (
     <div
       className={cn(
-        "w-full max-w-screen-xl mx-auto min-h-screen flex-col md:flex hidden"
+        "w-full max-w-screen-xl mx-auto min-h-screen flex-col sm:flex hidden"
       )}
     >
       <div className="space-y-2 text-center">

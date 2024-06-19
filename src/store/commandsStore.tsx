@@ -155,7 +155,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
-      command: ["next"],
+      command: ["next vid", "next video"],
       label: "Next Video",
       callback: () => {
         handleNext();
@@ -240,6 +240,20 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       callback: () => {
         handlePage("back");
       },
+    },
+    {
+      command: ["next tab"],
+      label: "Next tab",
+      callback: async () => {
+        await switchToNextTab();
+      }
+    },
+    {
+      command: ["previous tab"],
+      label: "Previous tab",
+      callback: async () => {
+        await switchToPreviousTab();
+      }
     },
     {
       command: ["back"],
@@ -484,7 +498,7 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       },
     },
     {
-      command: ["next"],
+      command: ["next vid", "next video"],
       label: "Next Video",
       callback: () => {
         handleNext();
@@ -520,6 +534,20 @@ export const useCommandValues = create<CommandStore>()((set) => ({
       callback: () => {
         handlePage("back");
       },
+    },
+    {
+      command: ["next tab"],
+      label: "Next tab",
+      callback: async () => {
+        await switchToNextTab();
+      }
+    },
+    {
+      command: ["previous tab"],
+      label: "Previous tab",
+      callback: async () => {
+        await switchToPreviousTab();
+      }
     },
     {
       command: ["back"],
@@ -682,6 +710,42 @@ const handlePlayback = async (type: "pause" | "play") => {
     args: [type],
   });
 };
+
+async function switchToNextTab() {
+  const [currentTab] = await chrome.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+
+  if (!currentTab || !currentTab.id) return;
+
+  const tabs = await chrome.tabs.query({ currentWindow: true });
+  const currentIndex = tabs.findIndex(tab => tab.id === currentTab.id);
+  const nextIndex = (currentIndex + 1) % tabs.length;
+  const nextTab = tabs[nextIndex];
+
+  if (nextTab && nextTab.id) {
+    await chrome.tabs.update(nextTab.id, { active: true });
+  }
+}
+
+async function switchToPreviousTab() {
+  const [currentTab] = await chrome.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+
+  if (!currentTab || !currentTab.id) return;
+
+  const tabs = await chrome.tabs.query({ currentWindow: true });
+  const currentIndex = tabs.findIndex(tab => tab.id === currentTab.id);
+  const previousIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  const previousTab = tabs[previousIndex];
+
+  if (previousTab && previousTab.id) {
+    await chrome.tabs.update(previousTab.id, { active: true });
+  }
+}
 
 const handleFullScreen = async (type: string) => {
   const [tab] = await chrome.tabs.query({ active: true });

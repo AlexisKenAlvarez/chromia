@@ -32,6 +32,8 @@ import {
 
 const MediaControlSettings = () => {
   const mediaCommands = useCommandValues((state) => state.mediaCommands);
+  const navigationCommands = useCommandValues((state) => state.navigationCommands);
+
   const [addingTo, setAddingTo] = useState("");
   const [editing, setEditing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -62,6 +64,20 @@ const MediaControlSettings = () => {
   });
 
   function onSubmit(values: commandType) {
+
+    const existing1 = mediaCommands.map((item) => item.command).flat().find((item) => item === values.command)
+    const existing2 = navigationCommands.map((item) => item.command).flat().find((item) => item === values.command)
+    const existing3 = values.command === "search" || values.command === "open" || values.command === "go to"
+
+
+    if (existing1 || existing2 || existing3) {
+      form.setError("command", {
+        type: "manual",
+        message: "Command already exists",
+      });
+      return;
+    }
+
     setMediaCommands({ command: values.command, label: addingTo });
 
     chrome.storage.sync.set(
